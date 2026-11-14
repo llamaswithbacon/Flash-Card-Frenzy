@@ -167,31 +167,48 @@
   btn.addEventListener('click', function () {
     btn.disabled = true;
     resultEl.textContent = '🎤…';
-    detailEl.textContent = 'Listening…';
+    detailEl.textContent = 'Starting…';
 
     const recognition = new SR();
     recognition.lang = 'es-MX';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
+    let settled = false;
+    function settle(status, text) {
+      if (settled) return;
+      settled = true;
+      resultEl.textContent = status;
+      detailEl.textContent = text;
+      btn.disabled = false;
+    }
+
+    recognition.onstart = function () {
+      detailEl.textContent = 'Listening… (mic is active — speak now)';
+    };
+
     const stopTimer = setTimeout(function () { recognition.stop(); }, 6000);
+    const hardTimeout = setTimeout(function () {
+      settle('⚠️', 'Timed out with no result and no error after 8 seconds. This usually means speech recognition does not actually work in this browser on iOS, even though the API exists.');
+    }, 8000);
 
     recognition.onresult = function (event) {
+      clearTimeout(hardTimeout);
       const transcript = event.results[0][0].transcript;
       const confidence = event.results[0][0].confidence;
-      resultEl.textContent = '✅';
-      detailEl.textContent = `Heard: "${transcript}" (confidence: ${(confidence * 100).toFixed(0)}%)`;
+      settle('✅', `Heard: "${transcript}" (confidence: ${(confidence * 100).toFixed(0)}%)`);
     };
 
     recognition.onerror = function (event) {
-      resultEl.textContent = '❌';
-      detailEl.textContent = 'Error: ' + event.error +
-        (event.error === 'not-allowed' ? ' — mic permission was denied. Check iPhone Settings → Chrome/Safari → Microphone.' : '');
+      clearTimeout(hardTimeout);
+      settle('❌', 'Error: ' + event.error +
+        (event.error === 'not-allowed' ? ' — mic permission was denied. Check iPhone Settings → Chrome/Safari → Microphone.' : ''));
     };
 
     recognition.onend = function () {
       clearTimeout(stopTimer);
-      btn.disabled = false;
+      clearTimeout(hardTimeout);
+      settle('⚠️', 'Recognition ended with no result and no error. This usually means speech recognition does not actually work in this browser on iOS, even though the API exists.');
     };
 
     recognition.start();
