@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Browser Test — Español en el Taller</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="IMG_1070.png">
+<meta name="theme-color" content="#1b4f72">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: #0d2436;
+    color: #f0f4f8;
+    margin: 0;
+    padding: 16px 16px 48px;
+  }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; }
+  p.sub { color: #9db4c4; margin-top: 0; font-size: 0.9rem; }
+  .card {
+    background: #16344c;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .card h2 { font-size: 1rem; margin: 0 0 8px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .status { font-size: 1.3rem; }
+  .detail { font-size: 0.85rem; color: #c3d3de; margin-top: 6px; word-break: break-word; }
+  button {
+    background: #f4a21e;
+    color: #1b1300;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  button:active { opacity: 0.8; }
+  button:disabled { opacity: 0.4; }
+</style>
+</head>
+<body>
+
+<h1>Browser Capability Test</h1>
+<p class="sub">Run this in all 4 ways: Chrome tab, Chrome home-screen, Safari tab, Safari home-screen. Screenshot each result and send them over.</p>
+
+<div class="card">
+  <h2>1. How you're viewing this</h2>
+  <div id="env-result" class="detail">Checking…</div>
+</div>
+
+<div class="card">
+  <h2>2. Spanish text-to-speech</h2>
+  <div class="row">
+    <div id="tts-result" class="status">⏳</div>
+    <button id="tts-btn" disabled>▶️ Play test phrase</button>
+  </div>
+  <div id="tts-detail" class="detail"></div>
+</div>
+
+<div class="card">
+  <h2>3. Speech recognition (microphone)</h2>
+  <div class="row">
+    <div id="stt-result" class="status">⏳</div>
+    <button id="stt-btn" disabled>🎤 Test microphone</button>
+  </div>
+  <div id="stt-detail" class="detail">Say something in Spanish when you tap the button, like "cuarenta y siete dólares."</div>
+</div>
+
+<div class="card">
+  <h2>4. Saving data</h2>
+  <div id="storage-result" class="detail">Checking…</div>
+</div>
+
+<div class="card">
+  <h2>5. Offline</h2>
+  <div id="offline-result" class="detail">Checking…</div>
+  <div class="detail">To actually test this: load this page once (you're doing that now), then turn on Airplane Mode and reload this page. If it still loads, offline works.</div>
+</div>
+
+<script>
+// ---- 1. Environment ----
+(function () {
+  const ua = navigator.userAgent;
+  const isStandalone = window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+  let browser = 'Unknown';
+  if (/CriOS/.test(ua)) browser = 'Chrome (iOS)';
+  else if (/FxiOS/.test(ua)) browser = 'Firefox (iOS)';
+  else if (/Version\/[\d.]+.*Safari/.test(ua) && /iPhone|iPad/.test(ua)) browser = 'Safari (iOS)';
+  document.getElementById('env-result').textContent =
+    `Browser: ${browser} · Mode: ${isStandalone ? 'Home-screen (standalone)' : 'Browser tab'}`;
+})();
+
+// ---- 2. Text-to-speech ----
+(function () {
+  const resultEl = document.getElementById('tts-result');
+  const detailEl = document.getElementById('tts-detail');
+  const btn = document.getElementById('tts-btn');
+
+  if (!('speechSynthesis' in window)) {
+    resultEl.textContent = '❌';
+    detailEl.textContent = 'speechSynthesis is not available in this browser.';
+    return;
+  }
+
+  function getSpanishVoices() {
+    return speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('es'));
+  }
+
+  function report() {
+    const voices = getSpanishVoices();
+    if (voices.length > 0) {
+      resultEl.textContent = '✅';
+      detailEl.textContent = `Found ${voices.length} Spanish voice(s): ` +
+        voices.map(v => `${v.name} (${v.lang})`).join(', ');
+      btn.disabled = false;
+    } else {
+      resultEl.textContent = '⚠️';
+      detailEl.textContent = 'No Spanish voice found yet. iPhone Settings → Accessibility → Spoken Content → Voices → Spanish, to download one.';
+      btn.disabled = false;
+    }
+  }
+
+  if (speechSynthesis.getVoices().length > 0) {
+    report();
+  } else {
+    speechSynthesis.onvoiceschanged = report;
+    setTimeout(report, 1000);
+  }
+
+  btn.addEventListener('click', function () {
+    const voices = getSpanishVoices();
+    const utter = new SpeechSynthesisUtterance('Hola, buenos días. Cuarenta y siete dólares con ochenta y tres centavos.');
+    if (voices.length > 0) {
+      const preferred = voices.find(v => /MX|US/i.test(v.lang)) || voices[0];
+      utter.voice = preferred;
+      utter.lang = preferred.lang;
+    } else {
+      utter.lang = 'es-MX';
+    }
+    speechSynthesis.speak(utter);
+  });
+})();
+
+// ---- 3. Speech recognition ----
+(function () {
+  const resultEl = document.getElementById('stt-result');
+  const detailEl = document.getElementById('stt-detail');
+  const btn = document.getElementById('stt-btn');
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SR) {
+    resultEl.textContent = '❌';
+    detailEl.textContent = 'Speech recognition API is not available in this browser.';
+    return;
+  }
+
+  resultEl.textContent = '✅';
+  detailEl.textContent = 'API available. Tap the button, allow microphone access if asked, then speak a short Spanish phrase.';
+  btn.disabled = false;
+
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    resultEl.textContent = '🎤…';
+    detailEl.textContent = 'Listening…';
+
+    const recognition = new SR();
+    recognition.lang = 'es-MX';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    const stopTimer = setTimeout(function () { recognition.stop(); }, 6000);
+
+    recognition.onresult = function (event) {
+      const transcript = event.results[0][0].transcript;
+      const confidence = event.results[0][0].confidence;
+      resultEl.textContent = '✅';
+      detailEl.textContent = `Heard: "${transcript}" (confidence: ${(confidence * 100).toFixed(0)}%)`;
+    };
+
+    recognition.onerror = function (event) {
+      resultEl.textContent = '❌';
+      detailEl.textContent = 'Error: ' + event.error +
+        (event.error === 'not-allowed' ? ' — mic permission was denied. Check iPhone Settings → Chrome/Safari → Microphone.' : '');
+    };
+
+    recognition.onend = function () {
+      clearTimeout(stopTimer);
+      btn.disabled = false;
+    };
+
+    recognition.start();
+  });
+})();
+
+// ---- 4. Storage persistence ----
+(function () {
+  const el = document.getElementById('storage-result');
+  const key = 'etTestVisited';
+  try {
+    const previous = localStorage.getItem(key);
+    const now = new Date().toLocaleString();
+    localStorage.setItem(key, now);
+    if (previous) {
+      el.textContent = `✅ Found a value saved from a previous visit: ${previous}. Just updated it to ${now}.`;
+    } else {
+      el.textContent = `⚠️ No previous value found (this may be your first visit here). Saved ${now} — reload this page to confirm it's still here next time.`;
+    }
+  } catch (e) {
+    el.textContent = '❌ localStorage is not available: ' + e.message;
+  }
+})();
+
+// ---- 5. Offline / service worker ----
+(function () {
+  const el = document.getElementById('offline-result');
+  if (!('serviceWorker' in navigator)) {
+    el.textContent = '❌ Service workers are not supported in this browser — offline mode will not work here.';
+    return;
+  }
+  navigator.serviceWorker.register('./sw.js').then(function () {
+    el.textContent = '✅ Service worker registered. Online right now: ' + (navigator.onLine ? 'yes' : 'no') + '.';
+  }).catch(function (err) {
+    el.textContent = '❌ Service worker failed to register: ' + err.message;
+  });
+})();
+</script>
+</body>
+</html>
