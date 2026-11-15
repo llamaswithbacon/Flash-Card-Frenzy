@@ -39,16 +39,20 @@ in both Chrome and Safari. Full results in [README.md](README.md).
 
 ## Phase 1: Core flashcards
 
-- [ ] Card data model + `seed-cards.json` built from the locked content
-- [ ] Main menu screen (title, Play button, Options button)
-- [ ] Tap-to-flip card with flip animation
-- [ ] Shuffled session, no repeats within a session unless not enough cards
-- [ ] ✓ Got it / ✗ Missed grading
-- [ ] Progress indicator ("7 / 20") and Next
-- [ ] End-of-session summary screen (cards done, number right, time taken) with Play again / Main menu
-- [ ] Publish to GitHub Pages
+- [x] Card data model + `seed-cards.json` built from the locked content
+- [x] Main menu screen (title, Play button, Options button)
+- [x] Tap-to-flip card with flip animation
+- [x] Shuffled session, no repeats within a session unless not enough cards
+- [x] ✓ Got it / ✗ Missed grading
+- [x] Progress indicator ("7 / 20") and Next
+- [x] End-of-session summary screen (cards done, number right, time taken) with Play again / Main menu
+- [x] Publish to GitHub Pages
 
 **Done when:** Carl can play a 10-card session of Words and Phrases from his home-screen icon.
+
+**Status: ✅ Phase 1 complete.** Confirmed by Carl on his iPhone home-screen icon: played a
+full 10-card session, flipped cards, graded ✓/✗, reached the summary screen.
+Note: the Options button currently shows a "coming in Phase 2" message — full settings land next phase.
 
 ---
 
