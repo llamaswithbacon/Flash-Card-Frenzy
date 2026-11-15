@@ -1,4 +1,5 @@
-// app.js — Phase 1: main menu, tap-to-flip sessions, self-grading, summary.
+// app.js — Phase 2: Options menu (card direction, categories, session length,
+// timer toggle) with everything saved to localStorage and restored on load.
 // Card content comes from seed-cards.json; language/UI text comes from config.js.
 
 const screens = {
@@ -13,11 +14,33 @@ function showScreen(name) {
   screens[name].classList.add('active');
 }
 
+// ---- Settings: load, save, defaults ----
+function loadSettings() {
+  let saved = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY)) || {};
+  } catch (e) {
+    saved = {};
+  }
+  return {
+    directions: Object.assign({}, DEFAULT_SETTINGS.directions, saved.directions),
+    categories: Object.assign({}, DEFAULT_SETTINGS.categories, saved.categories),
+    moneySub: Object.assign({}, DEFAULT_SETTINGS.moneySub, saved.moneySub),
+    sessionLength: saved.sessionLength || DEFAULT_SETTINGS.sessionLength,
+    showTimer: typeof saved.showTimer === 'boolean' ? saved.showTimer : DEFAULT_SETTINGS.showTimer
+  };
+}
+
+function saveSettings() {
+  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+}
+
+let settings = loadSettings();
+
 // ---- Static text ----
 document.getElementById('app-title').textContent = STRINGS.appTitle;
 document.getElementById('play-btn').textContent = STRINGS.playButton;
 document.getElementById('options-btn').textContent = STRINGS.optionsButton;
-document.getElementById('options-text').textContent = STRINGS.optionsComingSoon;
 document.getElementById('options-back-btn').textContent = STRINGS.backButton;
 document.getElementById('end-session-btn').textContent = STRINGS.endSession;
 document.getElementById('missed-btn').textContent = STRINGS.missed;
@@ -26,6 +49,118 @@ document.getElementById('next-btn').textContent = STRINGS.next;
 document.getElementById('summary-title').textContent = STRINGS.summaryTitle;
 document.getElementById('play-again-btn').textContent = STRINGS.playAgain;
 document.getElementById('summary-menu-btn').textContent = STRINGS.mainMenu;
+
+document.getElementById('options-directions-heading').textContent = STRINGS.optionsDirectionsHeading;
+document.getElementById('dir-es-en-label').textContent = STRINGS.directionEsToEn;
+document.getElementById('dir-es-en-audio-label').textContent = STRINGS.directionEsEnAudio;
+document.getElementById('dir-en-es-label').textContent = STRINGS.directionEnToEs;
+
+document.getElementById('options-categories-heading').textContent = STRINGS.optionsCategoriesHeading;
+document.getElementById('cat-money-label').textContent = CATEGORY_LABELS.money;
+document.getElementById('cat-words-label').textContent = CATEGORY_LABELS.words;
+document.getElementById('cat-phrases-label').textContent = CATEGORY_LABELS.phrases;
+document.getElementById('cat-questions-label').textContent = CATEGORY_LABELS.questions;
+document.getElementById('money-whole-label').textContent = STRINGS.moneyWholeDollars;
+document.getElementById('money-cents-label').textContent = STRINGS.moneyCents;
+document.getElementById('money-coming-soon-note').textContent = STRINGS.moneyComingSoon;
+
+document.getElementById('options-session-length-heading').textContent = STRINGS.optionsSessionLengthHeading;
+document.getElementById('options-timer-heading').textContent = STRINGS.optionsTimerHeading;
+document.getElementById('show-timer-label').textContent = STRINGS.showTimerLabel;
+
+// ---- Options screen: wire controls to settings ----
+const dirEsEn = document.getElementById('dir-es-en');
+const dirEsEnAudio = document.getElementById('dir-es-en-audio');
+const dirEnEs = document.getElementById('dir-en-es');
+
+const catMoney = document.getElementById('cat-money');
+const catWords = document.getElementById('cat-words');
+const catPhrases = document.getElementById('cat-phrases');
+const catQuestions = document.getElementById('cat-questions');
+const moneySubOptions = document.getElementById('money-sub-options');
+const moneyWhole = document.getElementById('money-whole');
+const moneyCents = document.getElementById('money-cents');
+
+const sessionLengthSlider = document.getElementById('session-length-slider');
+const sessionLengthValue = document.getElementById('session-length-value');
+const showTimerCheckbox = document.getElementById('show-timer');
+
+function renderOptionsScreen() {
+  dirEsEn.checked = settings.directions.esToEn;
+  dirEsEnAudio.checked = settings.directions.esEnAudio;
+  dirEnEs.checked = settings.directions.enToEs;
+
+  catMoney.checked = settings.categories.money;
+  catWords.checked = settings.categories.words;
+  catPhrases.checked = settings.categories.phrases;
+  catQuestions.checked = settings.categories.questions;
+  moneySubOptions.style.display = settings.categories.money ? 'block' : 'none';
+  moneyWhole.checked = settings.moneySub.wholeDollars;
+  moneyCents.checked = settings.moneySub.cents;
+
+  sessionLengthSlider.value = settings.sessionLength;
+  sessionLengthValue.textContent = settings.sessionLength + ' cards';
+
+  showTimerCheckbox.checked = settings.showTimer;
+}
+
+// Generic guard: keeps at least one checkbox in a group checked. Call from a
+// change handler; returns true if the change was allowed, false if it was
+// reverted because it would have left the group empty.
+function guardAtLeastOne(checkboxes, changedBox, message) {
+  const anyChecked = checkboxes.some(cb => cb.checked);
+  if (!anyChecked) {
+    changedBox.checked = true;
+    alert(message);
+    return false;
+  }
+  return true;
+}
+
+[dirEsEn, dirEsEnAudio, dirEnEs].forEach(function (box) {
+  box.addEventListener('change', function () {
+    const group = [dirEsEn, dirEsEnAudio, dirEnEs];
+    if (!guardAtLeastOne(group, box, STRINGS.lastDirectionMessage)) return;
+    settings.directions.esToEn = dirEsEn.checked;
+    settings.directions.esEnAudio = dirEsEnAudio.checked;
+    settings.directions.enToEs = dirEnEs.checked;
+    saveSettings();
+  });
+});
+
+[catMoney, catWords, catPhrases, catQuestions].forEach(function (box) {
+  box.addEventListener('change', function () {
+    const group = [catMoney, catWords, catPhrases, catQuestions];
+    if (!guardAtLeastOne(group, box, STRINGS.lastCategoryMessage)) return;
+    settings.categories.money = catMoney.checked;
+    settings.categories.words = catWords.checked;
+    settings.categories.phrases = catPhrases.checked;
+    settings.categories.questions = catQuestions.checked;
+    moneySubOptions.style.display = settings.categories.money ? 'block' : 'none';
+    saveSettings();
+  });
+});
+
+[moneyWhole, moneyCents].forEach(function (box) {
+  box.addEventListener('change', function () {
+    const group = [moneyWhole, moneyCents];
+    if (!guardAtLeastOne(group, box, STRINGS.lastMoneySubMessage)) return;
+    settings.moneySub.wholeDollars = moneyWhole.checked;
+    settings.moneySub.cents = moneyCents.checked;
+    saveSettings();
+  });
+});
+
+sessionLengthSlider.addEventListener('input', function () {
+  settings.sessionLength = parseInt(sessionLengthSlider.value, 10);
+  sessionLengthValue.textContent = settings.sessionLength + ' cards';
+  saveSettings();
+});
+
+showTimerCheckbox.addEventListener('change', function () {
+  settings.showTimer = showTimerCheckbox.checked;
+  saveSettings();
+});
 
 // ---- Deck loading ----
 let allCards = [];
@@ -51,11 +186,24 @@ function shuffle(arr) {
 
 // ---- Session state ----
 let session = null; // { queue, index, correct, startedAt }
+let timerInterval = null;
+
+function enabledCategories() {
+  return Object.keys(settings.categories).filter(cat => settings.categories[cat]);
+}
+
+function enabledDirections() {
+  return Object.keys(settings.directions).filter(dir => settings.directions[dir]);
+}
+
+function pickDirection() {
+  const options = enabledDirections();
+  return options[Math.floor(Math.random() * options.length)];
+}
 
 function buildSession() {
-  const pool = allCards.filter(c =>
-    c.isEnabled && DEFAULT_ENABLED_CATEGORIES.includes(c.category)
-  );
+  const enabledCats = enabledCategories();
+  const pool = allCards.filter(c => c.isEnabled && enabledCats.includes(c.category));
   if (pool.length === 0) {
     alert(STRINGS.noCardsEnabled);
     return null;
@@ -64,12 +212,12 @@ function buildSession() {
   const queue = [];
   let shuffled = shuffle(pool.slice());
   let i = 0;
-  while (queue.length < DEFAULT_SESSION_LENGTH) {
+  while (queue.length < settings.sessionLength) {
     if (i >= shuffled.length) {
       shuffled = shuffle(pool.slice());
       i = 0;
     }
-    queue.push(shuffled[i]);
+    queue.push({ card: shuffled[i], direction: pickDirection() });
     i++;
   }
 
@@ -88,29 +236,41 @@ const cardBack = document.getElementById('card-back');
 const gradingRow = document.getElementById('grading-row');
 const nextRow = document.getElementById('next-row');
 const progressText = document.getElementById('progress-text');
+const timerText = document.getElementById('timer-text');
+
+function addSubLine(container, text) {
+  const line = document.createElement('div');
+  line.className = 'card-sub';
+  line.textContent = text;
+  container.appendChild(line);
+}
 
 function renderCard() {
-  const card = session.queue[session.index];
+  const entry = session.queue[session.index];
+  const card = entry.card;
+  const direction = entry.direction;
   cardInner.classList.remove('flipped');
   gradingRow.style.display = 'none';
   nextRow.style.display = 'none';
 
-  cardFront.textContent = card.spanish;
-
+  cardFront.innerHTML = '';
   cardBack.innerHTML = '';
-  const backMain = document.createElement('div');
-  backMain.textContent = card.english;
-  cardBack.appendChild(backMain);
+
+  if (direction === 'enToEs') {
+    cardFront.textContent = card.english;
+    addSubLine(cardBack, card.spanish);
+  } else if (direction === 'esEnAudio') {
+    addSubLine(cardFront, card.spanish);
+    addSubLine(cardFront, card.english);
+    addSubLine(cardBack, card.pronunciationHint || STRINGS.audioComingSoon);
+  } else {
+    cardFront.textContent = card.spanish;
+    addSubLine(cardBack, card.english);
+  }
 
   if (card.category === 'questions') {
-    const si = document.createElement('div');
-    si.className = 'card-sub';
-    si.textContent = 'Sí: ' + card.siAnswer;
-    const no = document.createElement('div');
-    no.className = 'card-sub';
-    no.textContent = 'No: ' + card.noAnswer;
-    cardBack.appendChild(si);
-    cardBack.appendChild(no);
+    addSubLine(cardBack, 'Sí: ' + card.siAnswer);
+    addSubLine(cardBack, 'No: ' + card.noAnswer);
   }
 
   progressText.textContent = (session.index + 1) + ' / ' + session.queue.length;
@@ -141,17 +301,30 @@ document.getElementById('next-btn').addEventListener('click', function () {
   }
 });
 
-function finishSession() {
-  const elapsedSeconds = Math.round((Date.now() - session.startedAt) / 1000);
+function formatElapsed(startedAt) {
+  const elapsedSeconds = Math.round((Date.now() - startedAt) / 1000);
   const mins = Math.floor(elapsedSeconds / 60);
   const secs = elapsedSeconds % 60;
+  return mins + ':' + String(secs).padStart(2, '0');
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function finishSession() {
+  stopTimer();
+  const elapsed = formatElapsed(session.startedAt);
 
   document.getElementById('summary-cards').textContent =
     'Cards done: ' + session.queue.length;
   document.getElementById('summary-correct').textContent =
     'Correct: ' + session.correct + ' / ' + session.queue.length;
   document.getElementById('summary-time').textContent =
-    'Time: ' + mins + ':' + String(secs).padStart(2, '0');
+    'Time: ' + elapsed;
 
   showScreen('summary');
 }
@@ -162,12 +335,28 @@ function startSession() {
   session = s;
   showScreen('session');
   renderCard();
+
+  if (settings.showTimer) {
+    timerText.style.display = 'block';
+    timerText.textContent = '0:00';
+    timerInterval = setInterval(function () {
+      timerText.textContent = formatElapsed(session.startedAt);
+    }, 1000);
+  } else {
+    timerText.style.display = 'none';
+  }
 }
 
 // ---- Navigation ----
 document.getElementById('play-btn').addEventListener('click', startSession);
 document.getElementById('play-again-btn').addEventListener('click', startSession);
-document.getElementById('options-btn').addEventListener('click', () => showScreen('options'));
+document.getElementById('options-btn').addEventListener('click', function () {
+  renderOptionsScreen();
+  showScreen('options');
+});
 document.getElementById('options-back-btn').addEventListener('click', () => showScreen('menu'));
-document.getElementById('end-session-btn').addEventListener('click', () => showScreen('menu'));
+document.getElementById('end-session-btn').addEventListener('click', function () {
+  stopTimer();
+  showScreen('menu');
+});
 document.getElementById('summary-menu-btn').addEventListener('click', () => showScreen('menu'));
