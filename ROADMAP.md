@@ -58,15 +58,18 @@ Note: the Options button currently shows a "coming in Phase 2" message — full 
 
 ## Phase 2: Options menu + saving
 
-- [ ] Card-direction checkboxes (Spanish→English, Spanish+English audio, English→Spanish), at least one always on
-- [ ] Category toggles (Money, Words, Phrases, Common Questions), at least one always on
-- [ ] Session-length slider (5–50 by 5)
-- [ ] Session timer toggle
-- [ ] Options screen Back button
-- [ ] Every setting saves immediately via `localStorage` and survives app restart
-- [ ] Publish to GitHub Pages
+- [x] Card-direction checkboxes (Spanish→English, Spanish+English audio, English→Spanish), at least one always on
+- [x] Category toggles (Money, Words, Phrases, Common Questions), at least one always on
+- [x] Session-length slider (5–50 by 5)
+- [x] Session timer toggle
+- [x] Options screen Back button
+- [x] Every setting saves immediately via `localStorage` and survives app restart
+- [x] Publish to GitHub Pages
 
 **Done when:** Carl changes settings, swipes the app closed, reopens it, and the settings are still set.
+
+**Status: ✅ Phase 2 built and verified on the live site. Awaiting Carl's iPhone test.**
+Note: Money category toggle saves correctly but won't produce cards until Phase 3 builds the money-card generator.
 
 ---
 
