@@ -1,11 +1,14 @@
-const CACHE_NAME = 'et-test-v1';
+const CACHE_NAME = 'et-v2';
 const ASSETS = [
   './',
   './index.html',
   './test.html',
   './manifest.json',
   './IMG_1070.png',
-  './IMG_1071.png'
+  './IMG_1071.png',
+  './seed-cards.json',
+  './js/config.js',
+  './js/app.js'
 ];
 
 self.addEventListener('install', function (event) {
