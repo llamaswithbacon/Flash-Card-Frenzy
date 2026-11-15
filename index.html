@@ -40,9 +40,10 @@
   button { touch-action: manipulation; }
   button:active { opacity: 0.8; }
 
-  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .topbar button { background: none; border: none; color: #c3d3de; font-size: 1rem; padding: 8px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+  .topbar button { background: none; border: none; color: #c3d3de; font-size: 1rem; padding: 8px; flex-shrink: 0; }
   .progress { font-size: 1rem; color: #c3d3de; }
+  .timer { font-size: 1rem; color: #c3d3de; }
 
   #session-screen { align-items: center; justify-content: center; }
   .card-wrap {
@@ -58,7 +59,7 @@
     position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
     background: #16344c; border-radius: 20px; display: flex; align-items: center;
     justify-content: center; text-align: center; padding: 24px; font-size: 1.4rem;
-    font-weight: 600; overflow-y: auto;
+    font-weight: 600; overflow-y: auto; flex-direction: column; gap: 8px;
   }
   .card-back { transform: rotateY(180deg); background: #1b4f72; }
   .card-sub { font-size: 1rem; font-weight: 400; color: #c3d3de; margin-top: 10px; }
@@ -75,8 +76,26 @@
   #summary-screen h2 { font-size: 1.4rem; margin-bottom: 4px; }
   .summary-line { font-size: 1.1rem; color: #c3d3de; }
 
-  #options-screen { gap: 16px; }
-  #options-screen p { font-size: 1.05rem; line-height: 1.5; }
+  #options-screen { gap: 4px; overflow-y: auto; }
+  #options-screen h2 { font-size: 1.2rem; margin: 18px 0 10px; }
+  #options-screen h2:first-of-type { margin-top: 6px; }
+
+  .toggle-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 4px;
+    border-bottom: 1px solid #16344c; font-size: 1.05rem;
+  }
+  .toggle-row input[type="checkbox"] {
+    width: 24px; height: 24px; flex-shrink: 0; accent-color: #f4a21e;
+  }
+  .toggle-row label { flex: 1; }
+  .sub-toggle { padding-left: 28px; }
+  .option-note { font-size: 0.9rem; color: #8fa6b8; padding: 4px 4px 10px; }
+
+  .slider-row { padding: 10px 4px 6px; }
+  .slider-value { font-weight: 700; color: #f4a21e; }
+  .slider-row input[type="range"] {
+    width: 100%; margin-top: 10px; accent-color: #f4a21e;
+  }
 </style>
 </head>
 <body>
@@ -91,12 +110,67 @@
   <div class="topbar">
     <button id="options-back-btn"></button>
   </div>
-  <p id="options-text"></p>
+
+  <h2 id="options-directions-heading"></h2>
+  <div class="toggle-row">
+    <input type="checkbox" id="dir-es-en">
+    <label for="dir-es-en" id="dir-es-en-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="checkbox" id="dir-es-en-audio">
+    <label for="dir-es-en-audio" id="dir-es-en-audio-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="checkbox" id="dir-en-es">
+    <label for="dir-en-es" id="dir-en-es-label"></label>
+  </div>
+
+  <h2 id="options-categories-heading"></h2>
+  <div class="toggle-row">
+    <input type="checkbox" id="cat-money">
+    <label for="cat-money" id="cat-money-label"></label>
+  </div>
+  <div id="money-sub-options">
+    <div class="toggle-row sub-toggle">
+      <input type="checkbox" id="money-whole">
+      <label for="money-whole" id="money-whole-label"></label>
+    </div>
+    <div class="toggle-row sub-toggle">
+      <input type="checkbox" id="money-cents">
+      <label for="money-cents" id="money-cents-label"></label>
+    </div>
+    <div class="option-note" id="money-coming-soon-note"></div>
+  </div>
+  <div class="toggle-row">
+    <input type="checkbox" id="cat-words">
+    <label for="cat-words" id="cat-words-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="checkbox" id="cat-phrases">
+    <label for="cat-phrases" id="cat-phrases-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="checkbox" id="cat-questions">
+    <label for="cat-questions" id="cat-questions-label"></label>
+  </div>
+
+  <h2 id="options-session-length-heading"></h2>
+  <div class="slider-row">
+    <span id="session-length-value" class="slider-value"></span>
+    <input type="range" id="session-length-slider" min="5" max="50" step="5">
+  </div>
+
+  <h2 id="options-timer-heading"></h2>
+  <div class="toggle-row">
+    <input type="checkbox" id="show-timer">
+    <label for="show-timer" id="show-timer-label"></label>
+  </div>
 </div>
 
 <div id="session-screen" class="screen">
   <div class="topbar">
     <button id="end-session-btn"></button>
+    <div class="timer" id="timer-text" style="display:none;"></div>
     <div class="progress" id="progress-text"></div>
   </div>
   <div class="card-wrap" id="card-wrap">
