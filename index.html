@@ -5,19 +5,125 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Español en el Taller</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1b4f72">
 <link rel="apple-touch-icon" href="IMG_1070.png">
+<meta name="theme-color" content="#1b4f72">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Taller Español">
 <style>
-  body { font-family: -apple-system, system-ui, sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; margin:0; background:#1b4f72; color:white; text-align:center; padding:24px; box-sizing:border-box; }
-  h1 { font-size:1.8rem; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #0d2436;
+    color: #f0f4f8;
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .screen { display: none; flex: 1; flex-direction: column; padding: 20px; }
+  .screen.active { display: flex; }
+
+  #menu-screen { align-items: center; justify-content: center; text-align: center; gap: 16px; }
+  #menu-screen h1 { font-size: 1.6rem; margin: 0 0 8px; }
+
+  .big-btn {
+    background: #f4a21e; color: #1b1300; border: none; border-radius: 14px;
+    padding: 18px 40px; font-size: 1.2rem; font-weight: 700; width: 100%;
+    max-width: 280px;
+  }
+  .secondary-btn {
+    background: #16344c; color: #f0f4f8; border: 1px solid #2a4f69; border-radius: 14px;
+    padding: 14px 40px; font-size: 1rem; font-weight: 600; width: 100%; max-width: 280px;
+  }
+  button { touch-action: manipulation; }
+  button:active { opacity: 0.8; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .topbar button { background: none; border: none; color: #c3d3de; font-size: 1rem; padding: 8px; }
+  .progress { font-size: 1rem; color: #c3d3de; }
+
+  #session-screen { align-items: center; justify-content: center; }
+  .card-wrap {
+    width: 100%; max-width: 360px; aspect-ratio: 4/3; perspective: 1200px;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  }
+  .card-inner {
+    position: relative; width: 100%; height: 100%;
+    transition: transform 0.4s; transform-style: preserve-3d;
+  }
+  .card-inner.flipped { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+    background: #16344c; border-radius: 20px; display: flex; align-items: center;
+    justify-content: center; text-align: center; padding: 24px; font-size: 1.4rem;
+    font-weight: 600; overflow-y: auto;
+  }
+  .card-back { transform: rotateY(180deg); background: #1b4f72; }
+  .card-sub { font-size: 1rem; font-weight: 400; color: #c3d3de; margin-top: 10px; }
+
+  .grading-row, .next-row { display: flex; gap: 12px; margin-top: 20px; width: 100%; max-width: 360px; }
+  .grading-row button, .next-row button {
+    flex: 1; padding: 16px; border-radius: 12px; border: none; font-size: 1.05rem; font-weight: 700;
+  }
+  .got-it-btn { background: #2e7d4f; color: white; }
+  .missed-btn { background: #a33a3a; color: white; }
+  .next-btn { background: #f4a21e; color: #1b1300; }
+
+  #summary-screen { align-items: center; justify-content: center; text-align: center; gap: 10px; }
+  #summary-screen h2 { font-size: 1.4rem; margin-bottom: 4px; }
+  .summary-line { font-size: 1.1rem; color: #c3d3de; }
+
+  #options-screen { gap: 16px; }
+  #options-screen p { font-size: 1.05rem; line-height: 1.5; }
 </style>
 </head>
 <body>
-<h1>¡Hola, Carl! 👋</h1>
-<p>Español en el Taller is live.</p>
-<p>This is the Phase 0 "Hello" page — the real flashcard app comes in Phase 1.</p>
+
+<div id="menu-screen" class="screen active">
+  <h1 id="app-title"></h1>
+  <button id="play-btn" class="big-btn"></button>
+  <button id="options-btn" class="secondary-btn"></button>
+</div>
+
+<div id="options-screen" class="screen">
+  <div class="topbar">
+    <button id="options-back-btn"></button>
+  </div>
+  <p id="options-text"></p>
+</div>
+
+<div id="session-screen" class="screen">
+  <div class="topbar">
+    <button id="end-session-btn"></button>
+    <div class="progress" id="progress-text"></div>
+  </div>
+  <div class="card-wrap" id="card-wrap">
+    <div class="card-inner" id="card-inner">
+      <div class="card-face card-front" id="card-front"></div>
+      <div class="card-face card-back" id="card-back"></div>
+    </div>
+  </div>
+  <div class="grading-row" id="grading-row" style="display:none;">
+    <button id="missed-btn" class="missed-btn"></button>
+    <button id="gotit-btn" class="got-it-btn"></button>
+  </div>
+  <div class="next-row" id="next-row" style="display:none;">
+    <button id="next-btn" class="next-btn"></button>
+  </div>
+</div>
+
+<div id="summary-screen" class="screen">
+  <h2 id="summary-title"></h2>
+  <div class="summary-line" id="summary-cards"></div>
+  <div class="summary-line" id="summary-correct"></div>
+  <div class="summary-line" id="summary-time"></div>
+  <button id="play-again-btn" class="big-btn" style="margin-top:20px;"></button>
+  <button id="summary-menu-btn" class="secondary-btn"></button>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
