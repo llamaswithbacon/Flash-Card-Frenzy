@@ -70,17 +70,27 @@ Note: the Options button currently shows a "coming in Phase 2" message — full 
 
 **Status: ✅ Phase 2 complete.** Confirmed by Carl on his iPhone home-screen icon: settings persisted after fully closing and reopening the app, and a session played correctly.
 
-Note: Money category toggle saves correctly but won't produce cards until Phase 3 builds the money-card generator.
+Note: Money moved out of the category list in Phase 3 — see that phase for why.
+
 
 ---
 
 ## Phase 3: Money cards
 
-- [ ] Spanish number-to-words converter (dollars and cents), with the tricky cases from brief Section 3
-- [ ] Unit tests for the converter (thorough — this is the riskiest logic in the app)
-- [ ] Whole-dollar and dollars-and-cents generators, weighted toward realistic shop prices
-- [ ] Money sub-toggles (whole dollars / cents), at least one on when Money is on
-- [ ] Publish to GitHub Pages
+- [x] Spanish number-to-words converter (dollars and cents), with the tricky cases from brief Section 3
+- [x] Unit tests for the converter (thorough — this is the riskiest logic in the app)
+- [x] Whole-dollar and dollars-and-cents generators, weighted toward realistic shop prices
+- [x] Money sub-toggles (whole dollars / cents), at least one on when Money is on
+- [x] **Design change (Carl's call):** Money is its own practice mode with a **💰 Money** button on the main menu, instead of a category mixed in with vocabulary. The Options screen's "Money practice" section (the whole-dollars/cents sub-toggles) now controls that mode directly.
+- [x] **Design change (Carl's call):** added a **Numbers** category to vocab mode — plain generated counting cards (0–100), separate from Money, using the same converter.
+- [x] Publish to GitHub Pages
+
+**Done when:** all converter unit tests pass, and money cards show up correctly when enabled.
+
+**Status: ✅ Phase 3 built and verified on the live site.** All 67 converter unit tests pass
+(see [money-tests.html](money-tests.html)). Locally verified: Money mode generates whole-dollar
+and dollars-and-cents cards correctly in both directions; vocab mode's Numbers category generates
+plain counting cards; all "at least one" guards still work. Awaiting Carl's iPhone test.
 
 **Done when:** all converter unit tests pass, and money cards show up correctly when enabled.
 
