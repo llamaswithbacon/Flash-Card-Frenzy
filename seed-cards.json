@@ -8,7 +8,7 @@
       "speechLocale": "es-MX",
       "voiceLangPrefixes": ["es-MX", "es-US", "es"]
     },
-    "categories": ["words", "phrases", "questions"]
+        "categories": ["words", "phrases", "questions", "numbers", "money"]
   },
   "cards": [
     { "id": "w1", "category": "words", "spanish": "el aceite", "english": "oil", "notes": "", "pronunciationHint": "", "acceptableAnswers": [], "isBuiltIn": true, "isEnabled": true, "timesSeen": 0, "timesCorrect": 0 },
