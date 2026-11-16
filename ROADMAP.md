@@ -68,7 +68,8 @@ Note: the Options button currently shows a "coming in Phase 2" message — full 
 
 **Done when:** Carl changes settings, swipes the app closed, reopens it, and the settings are still set.
 
-**Status: ✅ Phase 2 built and verified on the live site. Awaiting Carl's iPhone test.**
+**Status: ✅ Phase 2 complete.** Confirmed by Carl on his iPhone home-screen icon: settings persisted after fully closing and reopening the app, and a session played correctly.
+
 Note: Money category toggle saves correctly but won't produce cards until Phase 3 builds the money-card generator.
 
 ---
