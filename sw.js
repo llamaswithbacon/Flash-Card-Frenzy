@@ -1,4 +1,4 @@
-const CACHE_NAME = 'et-v3';
+const CACHE_NAME = 'et-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   './IMG_1071.png',
   './seed-cards.json',
   './js/config.js',
+  './js/es-numbers.js',
   './js/app.js'
 ];
 
