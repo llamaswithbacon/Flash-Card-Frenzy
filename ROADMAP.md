@@ -92,8 +92,6 @@ Note: Money moved out of the category list in Phase 3 — see that phase for why
 and dollars-and-cents cards correctly in both directions; vocab mode's Numbers category generates
 plain counting cards; all "at least one" guards still work. Awaiting Carl's iPhone test.
 
-**Done when:** all converter unit tests pass, and money cards show up correctly when enabled.
-
 ---
 
 ## Phase 4: Timers
