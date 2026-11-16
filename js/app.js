@@ -55,7 +55,7 @@ document.getElementById('summary-menu-btn').textContent = STRINGS.mainMenu;
 document.getElementById('options-directions-heading').textContent = STRINGS.optionsDirectionsHeading;
 document.getElementById('dir-es-en-label').textContent = STRINGS.directionEsToEn;
 document.getElementById('dir-es-en-audio-label').textContent = STRINGS.directionEsEnAudio;
-document.getElementById('dir-en-es-label').textContent = 
+document.getElementById('dir-en-es-label').textContent = document.getElementById('dir-en-es-label').textContent = 
 document.getElementById('options-categories-heading').textContent = STRINGS.optionsCategoriesHeading;
 document.getElementById('cat-words-label').textContent = CATEGORY_LABELS.words;
 document.getElementById('cat-phrases-label').textContent = CATEGORY_LABELS.phrases;
