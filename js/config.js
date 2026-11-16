@@ -14,10 +14,10 @@ const DEFAULT_SETTINGS = {
     enToEs: false   // English front -> Spanish back
   },
   categories: {
-    money: false,
     words: true,
     phrases: true,
-    questions: false
+    questions: false,
+    numbers: false
   },
   moneySub: {
     wholeDollars: true,
@@ -28,15 +28,16 @@ const DEFAULT_SETTINGS = {
 };
 
 const CATEGORY_LABELS = {
-  money: 'Money',
   words: 'Words',
   phrases: 'Phrases',
-  questions: 'Common Questions'
+  questions: 'Common Questions',
+  numbers: 'Numbers'
 };
 
 const STRINGS = {
   appTitle: 'Español en el Taller',
   playButton: '▶️ Play',
+  moneyButton: '💰 Money',
   optionsButton: '⚙️ Options',
   backButton: '← Back',
   gotIt: '✓ Got it',
@@ -57,10 +58,11 @@ const STRINGS = {
 
   optionsCategoriesHeading: 'Categories',
   lastCategoryMessage: 'At least one category has to stay on.',
+
+  optionsMoneyHeading: 'Money practice',
   moneyWholeDollars: 'Whole dollars (e.g. $47)',
   moneyCents: 'Dollars and cents (e.g. $47.83)',
   lastMoneySubMessage: 'At least one Money option has to stay on.',
-  moneyComingSoon: 'Money cards arrive in Phase 3 — this just saves your preference for now.',
 
   optionsSessionLengthHeading: 'Session length',
   optionsTimerHeading: 'Timer',
