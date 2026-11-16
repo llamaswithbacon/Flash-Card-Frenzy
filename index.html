@@ -58,11 +58,11 @@
   .card-face {
     position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
     background: #16344c; border-radius: 20px; display: flex; align-items: center;
-    justify-content: center; text-align: center; padding: 24px; font-size: 1.4rem;
+    justify-content: center; text-align: center; padding: 24px; font-size: 1.75rem;
     font-weight: 600; overflow-y: auto; flex-direction: column; gap: 8px;
   }
   .card-back { transform: rotateY(180deg); background: #1b4f72; }
-  .card-sub { font-size: 1rem; font-weight: 400; color: #c3d3de; margin-top: 10px; }
+  .card-sub { font-size: 1.25rem; font-weight: 400; color: #c3d3de; margin-top: 10px; }
 
   .grading-row, .next-row { display: flex; gap: 12px; margin-top: 20px; width: 100%; max-width: 360px; }
   .grading-row button, .next-row button {
@@ -88,8 +88,6 @@
     width: 24px; height: 24px; flex-shrink: 0; accent-color: #f4a21e;
   }
   .toggle-row label { flex: 1; }
-  .sub-toggle { padding-left: 28px; }
-  .option-note { font-size: 0.9rem; color: #8fa6b8; padding: 4px 4px 10px; }
 
   .slider-row { padding: 10px 4px 6px; }
   .slider-value { font-weight: 700; color: #f4a21e; }
@@ -103,6 +101,7 @@
 <div id="menu-screen" class="screen active">
   <h1 id="app-title"></h1>
   <button id="play-btn" class="big-btn"></button>
+  <button id="money-btn" class="secondary-btn"></button>
   <button id="options-btn" class="secondary-btn"></button>
 </div>
 
@@ -127,21 +126,6 @@
 
   <h2 id="options-categories-heading"></h2>
   <div class="toggle-row">
-    <input type="checkbox" id="cat-money">
-    <label for="cat-money" id="cat-money-label"></label>
-  </div>
-  <div id="money-sub-options">
-    <div class="toggle-row sub-toggle">
-      <input type="checkbox" id="money-whole">
-      <label for="money-whole" id="money-whole-label"></label>
-    </div>
-    <div class="toggle-row sub-toggle">
-      <input type="checkbox" id="money-cents">
-      <label for="money-cents" id="money-cents-label"></label>
-    </div>
-    <div class="option-note" id="money-coming-soon-note"></div>
-  </div>
-  <div class="toggle-row">
     <input type="checkbox" id="cat-words">
     <label for="cat-words" id="cat-words-label"></label>
   </div>
@@ -152,6 +136,20 @@
   <div class="toggle-row">
     <input type="checkbox" id="cat-questions">
     <label for="cat-questions" id="cat-questions-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="checkbox" id="cat-numbers">
+    <label for="cat-numbers" id="cat-numbers-label"></label>
+  </div>
+
+  <h2 id="options-money-heading"></h2>
+  <div class="toggle-row">
+    <input type="checkbox" id="money-whole">
+    <label for="money-whole" id="money-whole-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="checkbox" id="money-cents">
+    <label for="money-cents" id="money-cents-label"></label>
   </div>
 
   <h2 id="options-session-length-heading"></h2>
@@ -198,6 +196,7 @@
 </div>
 
 <script src="js/config.js"></script>
+<script src="js/es-numbers.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
