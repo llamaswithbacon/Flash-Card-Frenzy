@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Money Converter Tests — Español en el Taller</title>
+<meta name="theme-color" content="#1b4f72">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: #0d2436; color: #f0f4f8; margin: 0; padding: 16px 16px 48px;
+  }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; }
+  #summary { font-size: 1.1rem; font-weight: 700; margin: 10px 0 18px; }
+  .row { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid #16344c; font-size: 0.92rem; }
+  .status { flex-shrink: 0; }
+  .fail { color: #ff8a8a; }
+  .pass { color: #7fd99a; }
+</style>
+</head>
+<body>
+
+<h1>Money / Numbers Converter Tests</h1>
+<div id="summary">Running…</div>
+<div id="results"></div>
+
+<script src="js/es-numbers.js"></script>
+<script>
+const results = [];
+function check(label, actual, expected) {
+  const pass = actual === expected;
+  results.push({ label, actual, expected, pass });
+}
+
+// ---- numberToWords, no apocope (plain counting) ----
+check('0 → cero', numberToWords(0, false), 'cero');
+check('1 → uno', numberToWords(1, false), 'uno');
+check('9 → nueve', numberToWords(9, false), 'nueve');
+check('10 → diez', numberToWords(10, false), 'diez');
+check('11 → once', numberToWords(11, false), 'once');
+check('15 → quince', numberToWords(15, false), 'quince');
+check('16 → dieciséis', numberToWords(16, false), 'dieciséis');
+check('17 → diecisiete', numberToWords(17, false), 'diecisiete');
+check('19 → diecinueve', numberToWords(19, false), 'diecinueve');
+check('20 → veinte', numberToWords(20, false), 'veinte');
+check('21 → veintiuno', numberToWords(21, false), 'veintiuno');
+check('22 → veintidós', numberToWords(22, false), 'veintidós');
+check('23 → veintitrés', numberToWords(23, false), 'veintitrés');
+check('26 → veintiséis', numberToWords(26, false), 'veintiséis');
+check('29 → veintinueve', numberToWords(29, false), 'veintinueve');
+check('30 → treinta', numberToWords(30, false), 'treinta');
+check('31 → treinta y uno', numberToWords(31, false), 'treinta y uno');
+check('47 → cuarenta y siete', numberToWords(47, false), 'cuarenta y siete');
+check('60 → sesenta', numberToWords(60, false), 'sesenta');
+check('70 → setenta', numberToWords(70, false), 'setenta');
+check('80 → ochenta', numberToWords(80, false), 'ochenta');
+check('90 → noventa', numberToWords(90, false), 'noventa');
+check('99 → noventa y nueve', numberToWords(99, false), 'noventa y nueve');
+check('100 → cien', numberToWords(100, false), 'cien');
+check('101 → ciento uno', numberToWords(101, false), 'ciento uno');
+check('110 → ciento diez', numberToWords(110, false), 'ciento diez');
+check('121 → ciento veintiuno', numberToWords(121, false), 'ciento veintiuno');
+check('150 → ciento cincuenta', numberToWords(150, false), 'ciento cincuenta');
+check('199 → ciento noventa y nueve', numberToWords(199, false), 'ciento noventa y nueve');
+check('200 → doscientos', numberToWords(200, false), 'doscientos');
+check('201 → doscientos uno', numberToWords(201, false), 'doscientos uno');
+check('300 → trescientos', numberToWords(300, false), 'trescientos');
+check('400 → cuatrocientos', numberToWords(400, false), 'cuatrocientos');
+check('500 → quinientos', numberToWords(500, false), 'quinientos');
+check('600 → seiscientos', numberToWords(600, false), 'seiscientos');
+check('700 → setecientos', numberToWords(700, false), 'setecientos');
+check('800 → ochocientos', numberToWords(800, false), 'ochocientos');
+check('900 → novecientos', numberToWords(900, false), 'novecientos');
+check('999 → novecientos noventa y nueve', numberToWords(999, false), 'novecientos noventa y nueve');
+
+// ---- numberToWords, apocope (before a masculine noun like dólar/centavo) ----
+check('apocope 1 → un', numberToWords(1, true), 'un');
+check('apocope 11 → once (unaffected)', numberToWords(11, true), 'once');
+check('apocope 21 → veintiún', numberToWords(21, true), 'veintiún');
+check('apocope 31 → treinta y un', numberToWords(31, true), 'treinta y un');
+check('apocope 41 → cuarenta y un', numberToWords(41, true), 'cuarenta y un');
+check('apocope 101 → ciento un', numberToWords(101, true), 'ciento un');
+check('apocope 121 → ciento veintiún', numberToWords(121, true), 'ciento veintiún');
+
+// ---- amountToWords (dollars, cents) — brief's own worked examples ----
+check('$1.00 → un dólar', amountToWords(1, 0), 'un dólar');
+check('$2.00 → dos dólares', amountToWords(2, 0), 'dos dólares');
+check('$21.00 → veintiún dólares', amountToWords(21, 0), 'veintiún dólares');
+check('$0.01 → un centavo', amountToWords(0, 1), 'un centavo');
+check('$0.02 → dos centavos', amountToWords(0, 2), 'dos centavos');
+check('$100.00 → cien dólares', amountToWords(100, 0), 'cien dólares');
+check('$101.00 → ciento un dólares', amountToWords(101, 0), 'ciento un dólares');
+check('$500.00 → quinientos dólares', amountToWords(500, 0), 'quinientos dólares');
+check('$700.00 → setecientos dólares', amountToWords(700, 0), 'setecientos dólares');
+check('$900.00 → novecientos dólares', amountToWords(900, 0), 'novecientos dólares');
+check('$16.00 → dieciséis dólares', amountToWords(16, 0), 'dieciséis dólares');
+check('$47.83 → cuarenta y siete dólares con ochenta y tres centavos',
+  amountToWords(47, 83), 'cuarenta y siete dólares con ochenta y tres centavos');
+check('$1.01 → un dólar con un centavo', amountToWords(1, 1), 'un dólar con un centavo');
+check('$31.21 → treinta y un dólares con veintiún centavos',
+  amountToWords(31, 21), 'treinta y un dólares con veintiún centavos');
+check('$999.99 → novecientos noventa y nueve dólares con noventa y nueve centavos',
+  amountToWords(999, 99), 'novecientos noventa y nueve dólares con noventa y nueve centavos');
+
+// ---- generateMoneyCard: structural checks over many random draws ----
+(function () {
+  let wholeOk = true, wholeFormatOk = true;
+  for (let i = 0; i < 300; i++) {
+    const c = generateMoneyCard('whole');
+    if (c.spanish.indexOf('centavo') !== -1) wholeOk = false;
+    if (!/^\$\d+$/.test(c.english)) wholeFormatOk = false;
+  }
+  check('generateMoneyCard("whole") never mentions centavos', wholeOk, true);
+  check('generateMoneyCard("whole") english is "$<digits>"', wholeFormatOk, true);
+
+  let centsRangeOk = true, centsFormatOk = true;
+  for (let i = 0; i < 300; i++) {
+    const c = generateMoneyCard('cents');
+    if (!/^\$\d+\.\d{2}$/.test(c.english)) centsFormatOk = false;
+    const cents = parseInt(c.english.split('.')[1], 10);
+    if (cents < 0 || cents > 99) centsRangeOk = false;
+  }
+  check('generateMoneyCard("cents") english is "$<digits>.<2 digits>"', centsFormatOk, true);
+  check('generateMoneyCard("cents") cents in range 0-99', centsRangeOk, true);
+})();
+
+// ---- generateNumberCard: structural checks ----
+(function () {
+  let rangeOk = true, matchOk = true;
+  for (let i = 0; i < 300; i++) {
+    const c = generateNumberCard();
+    const value = parseInt(c.english, 10);
+    if (value < 0 || value > 100) rangeOk = false;
+    if (numberToWords(value, false) !== c.spanish) matchOk = false;
+  }
+  check('generateNumberCard() value stays within 0-100', rangeOk, true);
+  check('generateNumberCard() spanish matches numberToWords(value)', matchOk, true);
+})();
+
+// ---- Render results ----
+const passCount = results.filter(r => r.pass).length;
+const summaryEl = document.getElementById('summary');
+summaryEl.textContent = (passCount === results.length)
+  ? `✅ All ${results.length} tests passed`
+  : `❌ ${results.length - passCount} of ${results.length} tests failed`;
+summaryEl.className = (passCount === results.length) ? 'pass' : 'fail';
+
+const resultsEl = document.getElementById('results');
+results.forEach(r => {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const status = document.createElement('span');
+  status.className = 'status ' + (r.pass ? 'pass' : 'fail');
+  status.textContent = r.pass ? '✅' : '❌';
+  const text = document.createElement('span');
+  text.textContent = r.pass ? r.label : `${r.label} — got "${r.actual}", expected "${r.expected}"`;
+  row.appendChild(status);
+  row.appendChild(text);
+  resultsEl.appendChild(row);
+});
+</script>
+</body>
+</html>
+add money converter test page
