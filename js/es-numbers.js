@@ -105,4 +105,4 @@ function generateNumberCardPool(count) {
   for (let i = 0; i < count; i++) pool.push(generateNumberCard());
   return pool;
 }
-add spanish number converter
+
