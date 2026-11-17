@@ -97,9 +97,28 @@
   .slider-row input[type="range"] {
     width: 100%; margin-top: 10px; accent-color: #f4a21e;
   }
+
+  .voice-picker {
+    flex: 1; background: #16344c; color: #f0f4f8; border: 1px solid #2a4f69;
+    border-radius: 8px; padding: 8px; font-size: 1rem;
+  }
+
+  #update-banner {
+    display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    padding: env(safe-area-inset-top) 0 0;
+    background: #f4a21e;
+  }
+  #update-banner button {
+    width: 100%; background: none; border: none; color: #1b1300;
+    font-weight: 700; padding: 12px; font-size: 1rem;
+  }
 </style>
 </head>
 <body>
+
+<div id="update-banner">
+  <button id="update-reload-btn" type="button"></button>
+</div>
 
 <div id="menu-screen" class="screen active">
   <h1 id="app-title"></h1>
@@ -127,6 +146,20 @@
     <label for="dir-mixed" id="dir-mixed-label"></label>
   </div>
 
+  <h2 id="options-audio-heading"></h2>
+  <div class="toggle-row">
+    <input type="checkbox" id="auto-play">
+    <label for="auto-play" id="auto-play-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="checkbox" id="slow-speed">
+    <label for="slow-speed" id="slow-speed-label"></label>
+  </div>
+  <div class="toggle-row" id="voice-picker-row" style="display:none;">
+    <label for="voice-picker" id="voice-picker-label"></label>
+    <select id="voice-picker" class="voice-picker"></select>
+  </div>
+
   <h2 id="options-categories-heading"></h2>
   <div class="toggle-row">
     <input type="checkbox" id="cat-words">
@@ -147,11 +180,11 @@
 
   <h2 id="options-money-heading"></h2>
   <div class="toggle-row">
-    <input type="checkbox" id="money-whole">
+    <input type="radio" name="money-kind" id="money-whole">
     <label for="money-whole" id="money-whole-label"></label>
   </div>
   <div class="toggle-row">
-    <input type="checkbox" id="money-cents">
+    <input type="radio" name="money-kind" id="money-cents">
     <label for="money-cents" id="money-cents-label"></label>
   </div>
   <div class="slider-row">
@@ -176,6 +209,7 @@
   <div class="topbar">
     <button id="end-session-btn"></button>
     <div class="timer" id="timer-text" style="display:none;"></div>
+    <button id="speak-btn" type="button"></button>
     <div class="progress" id="progress-text"></div>
   </div>
   <div class="card-wrap" id="card-wrap">
