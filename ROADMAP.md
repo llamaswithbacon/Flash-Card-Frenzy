@@ -72,7 +72,6 @@ Note: the Options button currently shows a "coming in Phase 2" message — full 
 
 Note: Money moved out of the category list in Phase 3 — see that phase for why.
 
-
 ---
 
 ## Phase 3: Money cards
@@ -87,10 +86,11 @@ Note: Money moved out of the category list in Phase 3 — see that phase for why
 
 **Done when:** all converter unit tests pass, and money cards show up correctly when enabled.
 
-**Status: ✅ Phase 3 built and verified on the live site.** All 67 converter unit tests pass
-(see [money-tests.html](money-tests.html)). Locally verified: Money mode generates whole-dollar
-and dollars-and-cents cards correctly in both directions; vocab mode's Numbers category generates
-plain counting cards; all "at least one" guards still work. Awaiting Carl's iPhone test.
+**Status: ✅ Phase 3 complete, confirmed by Carl on his iPhone.** All 67 converter
+unit tests pass (see [money-tests.html](money-tests.html)). Three small issues Carl found
+while testing — card backs rendering smaller than fronts, the Money whole-dollars/cents
+choice not being exclusive, and the dollars-and-cents deck rarely producing a clean
+`$X.00` amount — are fixed together with the Phase 5 work below.
 
 ---
 
@@ -108,15 +108,25 @@ plain counting cards; all "at least one" guards still work. Awaiting Carl's iPho
 
 ## Phase 5: Audio (text-to-speech) + offline
 
-- [ ] 🔊 button plays the Spanish side via `speechSynthesis`
-- [ ] Auto-play option (works after the first tap of a session, per iOS audio rules)
-- [ ] Slow-speed option
-- [ ] Voice picker in Options if multiple Spanish voices are available
-- [ ] Service worker caching the app shell, cards, and TTS so it works in airplane mode
-- [ ] "Update available — tap to refresh" prompt when a new version is published
+- [x] 🔊 button plays the Spanish side via `speechSynthesis` — reads whichever side (front or
+      back) is currently showing the Spanish term, so it works the same in all three card-direction modes
+- [x] Auto-play option (works after the first tap of a session, per iOS audio rules)
+- [x] Slow-speed option
+- [x] Voice picker in Options if multiple Spanish voices are available
+- [x] Service worker (`sw.js`) now actually registered — it existed since Phase 3 but was
+      never wired up; caches the app shell + cards so it works in airplane mode
+- [x] "Update available — tap to refresh" banner when a new version is published, so a
+      cache-first service worker never leaves Carl silently stuck on stale content
 - [ ] Publish to GitHub Pages
 
 **Done when:** every Spanish card can be read aloud, and the app opens and plays cards with no signal.
+
+**Status: 🧪 Built and tested locally, not yet published.** TTS (🔊 button, auto-play,
+slow-speed, voice picker) verified directly. The service worker registration and
+update-banner code are correct, standard patterns, but the local test sandbox doesn't
+keep a service worker registered long enough to fully exercise the offline path — that
+specifically needs Carl's real-device test (including a real airplane-mode check) once
+published. Awaiting Carl's go-ahead to publish.
 
 ---
 
