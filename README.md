@@ -50,8 +50,26 @@ Any time a file in the repository is changed and saved ("committed"), the live s
 3. Tap **Add to Home Screen**.
 4. An icon will appear on your home screen like any other app.
 
-### How to add a new flashcard
-*(This section will be filled in once Phase 1 is built — the app will store its cards in a simple file that's easy to edit without touching any code.)*
+### How to add, edit, or remove a flashcard
+1. From the main menu, tap **⚙️ Options**, then **✏️ Manage Cards**.
+2. Pick a category (Words / Phrases / Questions) at the top.
+3. Tap the checkbox on any card to turn it on or off — it stays in the list
+   so you can turn it back on later.
+4. Tap ✏️ to edit a card, or 🗑️ to delete it permanently (you'll be asked
+   to confirm — this can't be undone except by restoring an older backup).
+5. Tap **+ Add card** to create a new one. Spanish and English text are
+   required; "Other acceptable Spanish answers" is optional (one per line)
+   and covers alternate ways to say the same thing for Voice practice
+   grading. Questions cards also get Sí/No example answers.
+6. Your changes save automatically and survive future app updates — they're
+   kept separate from the built-in card list, not mixed into it.
+
+### Backing up your cards
+On the Manage Cards screen, **⬇️ Export backup** downloads a JSON file with
+your cards, settings, and practice stats. **⬆️ Import backup** restores
+from one of those files (this replaces whatever's currently on the phone,
+so only do it if that's what you want). The main menu will remind you to
+back up if it's been 30+ days since your last export.
 
 ---
 
