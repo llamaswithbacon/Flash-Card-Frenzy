@@ -114,6 +114,43 @@
   .voice-feedback .heard-word.mismatch { color: #e07a7a; text-decoration: line-through; }
   .voice-feedback .voice-message { color: #c3d3de; font-size: 0.95rem; }
 
+  .backup-reminder {
+    display: none; align-items: center; justify-content: center; gap: 8px;
+    font-size: 0.9rem; color: #f4a21e; margin-top: -4px;
+  }
+  .backup-reminder button { background: none; border: none; color: #c3d3de; font-size: 1rem; padding: 2px 6px; }
+
+  #manage-cards-screen { gap: 4px; overflow-y: auto; }
+  .category-filter-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .category-filter-row button {
+    flex: 1; background: #16344c; color: #c3d3de; border: 1px solid #2a4f69;
+    border-radius: 10px; padding: 10px; font-size: 0.95rem; font-weight: 600;
+  }
+  .category-filter-row button.active-filter { background: #f4a21e; color: #1b1300; border-color: #f4a21e; }
+
+  .card-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .card-row {
+    display: flex; align-items: center; gap: 10px; background: #16344c;
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .card-row input[type="checkbox"] { width: 22px; height: 22px; flex-shrink: 0; accent-color: #f4a21e; }
+  .card-row-text { flex: 1; min-width: 0; }
+  .card-row-spanish { font-size: 1rem; font-weight: 600; }
+  .card-row-english { font-size: 0.9rem; color: #c3d3de; }
+  .card-row button { background: none; border: none; font-size: 1.1rem; padding: 4px 6px; flex-shrink: 0; }
+
+  .backup-row { display: flex; gap: 10px; margin-top: 10px; }
+  .backup-row button { flex: 1; }
+
+  #card-form-screen { gap: 4px; overflow-y: auto; }
+  .form-row { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: 0.95rem; color: #c3d3de; margin-bottom: 6px; }
+  .form-row input[type="text"], .form-row select, .form-row textarea {
+    width: 100%; background: #16344c; color: #f0f4f8; border: 1px solid #2a4f69;
+    border-radius: 8px; padding: 10px; font-size: 1rem;
+  }
+  .form-row textarea { min-height: 70px; resize: vertical; font-family: inherit; }
+
   #update-banner {
     display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
     padding: env(safe-area-inset-top) 0 0;
@@ -134,6 +171,10 @@
 <div id="menu-screen" class="screen active">
   <h1 id="app-title"></h1>
   <div class="total-time" id="total-practice-time"></div>
+  <div class="backup-reminder" id="backup-reminder-line">
+    <span id="backup-reminder-text"></span>
+    <button type="button" id="backup-reminder-dismiss">✕</button>
+  </div>
   <button id="play-btn" class="big-btn"></button>
   <button id="money-btn" class="secondary-btn"></button>
   <button id="options-btn" class="secondary-btn"></button>
@@ -143,6 +184,8 @@
   <div class="topbar">
     <button id="options-back-btn"></button>
   </div>
+
+  <button id="manage-cards-btn" class="secondary-btn" style="margin-bottom:14px;"></button>
 
   <h2 id="options-directions-heading"></h2>
   <div class="toggle-row">
@@ -236,6 +279,58 @@
     <input type="radio" name="voice-strictness" id="voice-strict">
     <label for="voice-strict" id="voice-strict-label"></label>
   </div>
+</div>
+
+<div id="manage-cards-screen" class="screen">
+  <div class="topbar">
+    <button id="manage-cards-back-btn"></button>
+  </div>
+  <div class="category-filter-row">
+    <button type="button" id="filter-words" data-category="words"></button>
+    <button type="button" id="filter-phrases" data-category="phrases"></button>
+    <button type="button" id="filter-questions" data-category="questions"></button>
+  </div>
+  <div class="card-list" id="card-list"></div>
+  <button id="add-card-btn" class="secondary-btn"></button>
+  <div class="backup-row">
+    <button id="export-btn" class="secondary-btn"></button>
+    <button id="import-btn" class="secondary-btn"></button>
+  </div>
+  <input type="file" id="import-file-input" accept="application/json" style="display:none;">
+</div>
+
+<div id="card-form-screen" class="screen">
+  <div class="topbar">
+    <button id="card-form-back-btn"></button>
+  </div>
+  <h2 id="card-form-heading"></h2>
+  <div class="form-row">
+    <label id="form-category-label" for="form-category"></label>
+    <select id="form-category">
+      <option value="words" id="form-category-words"></option>
+      <option value="phrases" id="form-category-phrases"></option>
+      <option value="questions" id="form-category-questions"></option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label id="form-spanish-label" for="form-spanish"></label>
+    <input type="text" id="form-spanish">
+  </div>
+  <div class="form-row">
+    <label id="form-english-label" for="form-english"></label>
+    <input type="text" id="form-english">
+  </div>
+  <div class="form-row">
+    <label id="form-acceptable-label" for="form-acceptable"></label>
+    <textarea id="form-acceptable"></textarea>
+  </div>
+  <div class="form-row" id="form-si-no-row">
+    <label id="form-si-label" for="form-si"></label>
+    <input type="text" id="form-si">
+    <label id="form-no-label" for="form-no"></label>
+    <input type="text" id="form-no">
+  </div>
+  <button id="form-save-btn" class="big-btn"></button>
 </div>
 
 <div id="session-screen" class="screen">
