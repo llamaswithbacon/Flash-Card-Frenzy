@@ -13,6 +13,7 @@ const screens = {
 function showScreen(name) {
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
+  if (name === 'menu') renderMenuStats();
 }
 
 // ---- Settings: load, save, defaults ----
@@ -41,6 +42,23 @@ function saveSettings() {
 }
 
 let settings = loadSettings();
+
+// ---- Lifetime practice-time stats ----
+function loadStats() {
+  let saved = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(STATS_STORAGE_KEY)) || {};
+  } catch (e) {
+    saved = {};
+  }
+  return { totalPracticeMs: typeof saved.totalPracticeMs === 'number' ? saved.totalPracticeMs : 0 };
+}
+
+function saveStats() {
+  localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats));
+}
+
+let stats = loadStats();
 
 // ---- Static text ----
 document.getElementById('app-title').textContent = STRINGS.appTitle;
@@ -84,6 +102,15 @@ document.getElementById('options-timer-heading').textContent = STRINGS.optionsTi
 document.getElementById('show-timer-label').textContent = STRINGS.showTimerLabel;
 
 document.getElementById('peek-btn').textContent = STRINGS.peekFront;
+
+// ---- Main menu: lifetime practice-time display ----
+const totalPracticeTimeEl = document.getElementById('total-practice-time');
+
+function renderMenuStats() {
+  totalPracticeTimeEl.textContent = STRINGS.totalPracticeLabel + formatDuration(stats.totalPracticeMs);
+}
+
+renderMenuStats();
 
 // ---- Options screen: wire controls to settings ----
 const dirEsEn = document.getElementById('dir-es-en');
@@ -269,9 +296,52 @@ function shuffle(arr) {
 }
 
 // ---- Session state ----
-let session = null; // { queue, index, correct, startedAt }
-let timerInterval = null;
+let session = null; // { queue, index, correct }
+let sessionInterval = null;
 let lastBuilder = buildSession; // which builder "Play again" should reuse; declared below
+
+// ---- Pause-aware active clock ----
+// Tracks only foregrounded time for the current session (backgrounding the
+// app shouldn't count), and folds elapsed time into the lifetime total as
+// it goes so a backgrounded tab getting killed by iOS doesn't lose it.
+let activeSegmentStart = null; // timestamp the current active segment began, or null if paused/no session
+let sessionActiveMs = 0; // accumulated active ms from closed segments this session
+
+function sessionElapsedMs() {
+  return sessionActiveMs + (activeSegmentStart !== null ? Date.now() - activeSegmentStart : 0);
+}
+
+// Commits elapsed time from the open segment into both the session total
+// and the persisted lifetime total, then immediately reopens the segment.
+function flushActiveClock() {
+  if (activeSegmentStart === null) return;
+  const now = Date.now();
+  const delta = now - activeSegmentStart;
+  sessionActiveMs += delta;
+  stats.totalPracticeMs += delta;
+  saveStats();
+  activeSegmentStart = now;
+}
+
+function pauseActiveClock() {
+  flushActiveClock();
+  activeSegmentStart = null;
+}
+
+function resumeActiveClock() {
+  if (activeSegmentStart === null) activeSegmentStart = Date.now();
+}
+
+document.addEventListener('visibilitychange', function () {
+  if (!session) return;
+  if (document.hidden) pauseActiveClock();
+  else resumeActiveClock();
+});
+
+window.addEventListener('pagehide', function () {
+  if (!session) return;
+  pauseActiveClock();
+});
 
 function enabledCategories() {
   return Object.keys(settings.categories).filter(cat => settings.categories[cat]);
@@ -318,8 +388,7 @@ function buildSession() {
   return {
     queue,
     index: 0,
-    correct: 0,
-    startedAt: Date.now()
+    correct: 0
   };
 }
 
@@ -333,8 +402,7 @@ function buildMoneySession() {
   return {
     queue,
     index: 0,
-    correct: 0,
-    startedAt: Date.now()
+    correct: 0
   };
 }
 
@@ -446,24 +514,35 @@ document.getElementById('next-btn').addEventListener('click', function () {
   }
 });
 
-function formatElapsed(startedAt) {
-  const elapsedSeconds = Math.round((Date.now() - startedAt) / 1000);
+function formatElapsed(ms) {
+  const elapsedSeconds = Math.round(ms / 1000);
   const mins = Math.floor(elapsedSeconds / 60);
   const secs = elapsedSeconds % 60;
   return mins + ':' + String(secs).padStart(2, '0');
 }
 
-function stopTimer() {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
+// Lifetime total, formatted coarser (hours/minutes) than a session's mm:ss.
+function formatDuration(ms) {
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return hours + 'h ' + minutes + 'm';
+  if (minutes > 0) return minutes + 'm';
+  return '< 1m';
+}
+
+function stopSessionInterval() {
+  if (sessionInterval) {
+    clearInterval(sessionInterval);
+    sessionInterval = null;
   }
 }
 
 function finishSession(cardsDone) {
-  stopTimer();
+  stopSessionInterval();
+  pauseActiveClock();
   const done = typeof cardsDone === 'number' ? cardsDone : session.queue.length;
-  const elapsed = formatElapsed(session.startedAt);
+  const elapsed = formatElapsed(sessionElapsedMs());
 
   document.getElementById('summary-cards').textContent =
     'Cards done: ' + done;
@@ -480,18 +559,22 @@ function startSessionWithBuilder(builderFn) {
   if (!s) return;
   lastBuilder = builderFn;
   session = s;
+  sessionActiveMs = 0;
+  resumeActiveClock();
   showScreen('session');
   renderCard();
 
-  if (settings.showTimer) {
-    timerText.style.display = 'block';
-    timerText.textContent = '0:00';
-    timerInterval = setInterval(function () {
-      timerText.textContent = formatElapsed(session.startedAt);
-    }, 1000);
-  } else {
-    timerText.style.display = 'none';
-  }
+  timerText.style.display = settings.showTimer ? 'block' : 'none';
+  if (settings.showTimer) timerText.textContent = '0:00';
+
+  // Always ticks during a session (not just when the timer is shown) so the
+  // lifetime total keeps saving every second, crash-safe.
+  sessionInterval = setInterval(function () {
+    flushActiveClock();
+    if (settings.showTimer) {
+      timerText.textContent = formatElapsed(sessionElapsedMs());
+    }
+  }, 1000);
 }
 
 // ---- Navigation ----
