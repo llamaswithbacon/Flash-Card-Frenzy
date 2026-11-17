@@ -104,6 +104,16 @@
     border-radius: 8px; padding: 8px; font-size: 1rem;
   }
 
+  .topbar button.listening { color: #f4a21e; }
+
+  .voice-feedback {
+    width: 100%; max-width: 360px; margin-top: 14px; text-align: center;
+  }
+  .voice-feedback .heard-line { font-size: 1.05rem; }
+  .voice-feedback .heard-word { margin: 0 2px; }
+  .voice-feedback .heard-word.mismatch { color: #e07a7a; text-decoration: line-through; }
+  .voice-feedback .voice-message { color: #c3d3de; font-size: 0.95rem; }
+
   #update-banner {
     display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
     padding: env(safe-area-inset-top) 0 0;
@@ -205,12 +215,34 @@
     <input type="checkbox" id="show-timer">
     <label for="show-timer" id="show-timer-label"></label>
   </div>
+
+  <h2 id="options-voice-heading"></h2>
+  <div class="toggle-row">
+    <input type="checkbox" id="voice-practice-enabled">
+    <label for="voice-practice-enabled" id="voice-practice-enabled-label"></label>
+  </div>
+  <div class="toggle-row" id="voice-strictness-heading-row">
+    <label id="voice-strictness-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="radio" name="voice-strictness" id="voice-easy">
+    <label for="voice-easy" id="voice-easy-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="radio" name="voice-strictness" id="voice-normal">
+    <label for="voice-normal" id="voice-normal-label"></label>
+  </div>
+  <div class="toggle-row">
+    <input type="radio" name="voice-strictness" id="voice-strict">
+    <label for="voice-strict" id="voice-strict-label"></label>
+  </div>
 </div>
 
 <div id="session-screen" class="screen">
   <div class="topbar">
     <button id="end-session-btn"></button>
     <div class="timer" id="timer-text" style="display:none;"></div>
+    <button id="mic-btn" type="button" style="display:none;"></button>
     <button id="speak-btn" type="button"></button>
     <div class="progress" id="progress-text"></div>
   </div>
@@ -220,6 +252,7 @@
       <div class="card-face card-back" id="card-back"></div>
     </div>
   </div>
+  <div class="voice-feedback" id="voice-feedback" style="display:none;"></div>
   <div class="grading-row" id="grading-row" style="display:none;">
     <button id="missed-btn" class="missed-btn"></button>
     <button id="gotit-btn" class="got-it-btn"></button>
