@@ -580,12 +580,12 @@ function showVoiceMessage(text) {
   voiceFeedbackEl.style.display = 'block';
 }
 
-function renderVoiceFeedback(transcript, bestAnswer) {
+function renderVoiceFeedback(transcript, bestAnswer, wordThreshold) {
   voiceFeedbackEl.innerHTML = '';
   const heardLine = document.createElement('div');
   heardLine.className = 'heard-line';
   heardLine.appendChild(document.createTextNode(STRINGS.heardLabel));
-  wordMatchHighlights(transcript, bestAnswer).forEach(function (w) {
+  wordMatchHighlights(transcript, bestAnswer, wordThreshold).forEach(function (w) {
     const span = document.createElement('span');
     span.className = 'heard-word' + (w.matched ? '' : ' mismatch');
     span.textContent = w.word;
@@ -600,11 +600,16 @@ function renderVoiceFeedback(transcript, bestAnswer) {
 function handleVoiceResult(entry, transcript) {
   const card = entry.card;
   const answers = [card.spanish].concat(card.acceptableAnswers || []);
-  const best = scoreAgainstAnswers(transcript, answers);
-  const threshold = VOICE_MATCH_THRESHOLDS[settings.voiceStrictness] || VOICE_MATCH_THRESHOLDS.normal;
-  const isCorrect = best.score >= threshold;
+  // Strictness controls how closely each individual word has to sound to
+  // count as a match — it does NOT let you skip or swap out a word. Every
+  // word in whichever acceptable answer matched best has to be heard; a
+  // shorter valid phrasing (e.g. "carro" instead of "el carro") is handled
+  // by it being its own entry in acceptableAnswers, not by partial credit.
+  const wordThreshold = VOICE_MATCH_THRESHOLDS[settings.voiceStrictness] || VOICE_MATCH_THRESHOLDS.normal;
+  const best = scoreAgainstAnswers(transcript, answers, wordThreshold);
+  const isCorrect = best.score >= 1;
 
-  renderVoiceFeedback(transcript, best.answer);
+  renderVoiceFeedback(transcript, best.answer, wordThreshold);
 
   if (!cardInner.classList.contains('flipped')) {
     cardInner.classList.add('flipped');
