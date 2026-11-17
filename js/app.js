@@ -512,6 +512,16 @@ speakBtn.addEventListener('click', function () {
   speakSpanish(session.queue[session.index].card.spanish);
 });
 
+// Spanish just became visible on the back (manual flip or a voice-practice
+// attempt); reveal the speaker — for practice and reinforcement even after
+// a voice attempt — and, if auto-play is on, speak it now.
+function revealSpeakerOnFlip(entry) {
+  if (entry.direction === 'enToEs') {
+    speakBtn.style.display = '';
+    if (settings.autoPlay) speakSpanish(entry.card.spanish);
+  }
+}
+
 cardInner.addEventListener('click', function () {
   if (!cardInner.classList.contains('flipped')) {
     cardInner.classList.add('flipped');
@@ -519,14 +529,7 @@ cardInner.addEventListener('click', function () {
     peekRow.style.display = 'flex';
     micBtn.style.display = 'none';
     stopRecognition();
-
-    // Spanish just became visible on the back; reveal the speaker and, if
-    // auto-play is on, speak it now.
-    const entry = session.queue[session.index];
-    if (entry.direction === 'enToEs') {
-      speakBtn.style.display = '';
-      if (settings.autoPlay) speakSpanish(entry.card.spanish);
-    }
+    revealSpeakerOnFlip(session.queue[session.index]);
   }
 });
 
@@ -607,6 +610,7 @@ function handleVoiceResult(entry, transcript) {
     cardInner.classList.add('flipped');
     gradingRow.style.display = 'flex';
     peekRow.style.display = 'flex';
+    revealSpeakerOnFlip(entry);
   }
   micBtn.style.display = 'none';
 
