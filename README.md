@@ -59,4 +59,5 @@ Any time a file in the repository is changed and saved ("committed"), the live s
 
 See [ROADMAP.md](./ROADMAP.md) for the full build plan and progress. Currently:
 **Phase 3 (Money cards) and Phase 5 (Audio + offline) both confirmed on Carl's iPhone,
-including a real airplane-mode test.**
+including a real airplane-mode test. Phase 4 (Timers) is built and published, awaiting
+Carl's phone test. Phase 6 (Voice mode) is planned next.**
