@@ -147,6 +147,30 @@ function normalizeSpanish(text) {
   return normalized.replace(/\s+/g, ' ').trim();
 }
 
+// For English (or any language without Spanish-specific quirks) — just
+// lowercase + strip punctuation. No accent folding needed, and no
+// digit-to-words conversion either: English speech recognizers already
+// transcribe spoken numbers as digits on their own, so a heard "47"
+// already matches a target "47" without conversion.
+function normalizeGeneric(text) {
+  return String(text).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// A few card.english entries use display shorthand — "card (credit/debit)",
+// "miles / mileage" — that would unfairly fail a word-recall check against
+// the full string. Also try it with any parenthetical removed, and each
+// "/"-separated part on its own, so saying just "card" or "miles" still
+// counts. Doesn't touch the seed data, just widens what's checked against.
+function englishAnswerVariants(text) {
+  const variants = [text];
+  text.split('/').map(function (part) { return part.trim(); }).filter(Boolean).forEach(function (part) {
+    if (part !== text) variants.push(part);
+  });
+  const withoutParens = text.replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+  if (withoutParens && withoutParens !== text) variants.push(withoutParens);
+  return variants;
+}
+
 function levenshteinDistance(a, b) {
   const m = a.length, n = b.length;
   if (m === 0) return n;
@@ -185,9 +209,9 @@ function wordsFuzzyMatch(a, b, wordThreshold) {
 // matter how long the phrase is. wordThreshold is also reused as the
 // per-word fuzzy cutoff, so Easy/Normal/Strict controls both how close each
 // word has to sound and how many of them have to match.
-function scoreTranscriptAgainstAnswer(transcript, answer, wordThreshold) {
-  const targetWords = normalizeSpanish(answer).split(' ').filter(Boolean);
-  const heardWords = normalizeSpanish(transcript).split(' ').filter(Boolean);
+function scoreTranscriptAgainstAnswer(transcript, answer, wordThreshold, normalizeFn) {
+  const targetWords = normalizeFn(answer).split(' ').filter(Boolean);
+  const heardWords = normalizeFn(transcript).split(' ').filter(Boolean);
   if (targetWords.length === 0) return 0;
   const matchedCount = targetWords.filter(function (tw) {
     return heardWords.some(function (hw) { return wordsFuzzyMatch(tw, hw, wordThreshold); });
@@ -195,12 +219,14 @@ function scoreTranscriptAgainstAnswer(transcript, answer, wordThreshold) {
   return matchedCount / targetWords.length;
 }
 
-// Scores a heard transcript against a card's Spanish answer plus any
-// acceptable alternates, returning whichever one matched best.
-function scoreAgainstAnswers(transcript, answers, wordThreshold) {
+// Scores a heard transcript against a card's answer plus any acceptable
+// alternates, returning whichever one matched best. normalizeFn picks the
+// language — normalizeSpanish for the Spanish side, normalizeGeneric (or
+// any other language's own normalizer) for everything else.
+function scoreAgainstAnswers(transcript, answers, wordThreshold, normalizeFn) {
   let best = { score: 0, answer: answers[0] || '' };
   answers.forEach(function (answer) {
-    const score = scoreTranscriptAgainstAnswer(transcript, answer, wordThreshold);
+    const score = scoreTranscriptAgainstAnswer(transcript, answer, wordThreshold, normalizeFn);
     if (score > best.score) best = { score: score, answer: answer };
   });
   return best;
@@ -208,11 +234,11 @@ function scoreAgainstAnswers(transcript, answers, wordThreshold) {
 
 // Per-word match info for "here's what I heard" feedback, against whichever
 // answer scored best in scoreAgainstAnswers.
-function wordMatchHighlights(transcript, bestAnswer, wordThreshold) {
-  const targetWords = normalizeSpanish(bestAnswer).split(' ').filter(Boolean);
+function wordMatchHighlights(transcript, bestAnswer, wordThreshold, normalizeFn) {
+  const targetWords = normalizeFn(bestAnswer).split(' ').filter(Boolean);
   const rawWords = transcript.trim().split(/\s+/).filter(Boolean);
   return rawWords.map(function (rawWord) {
-    const normWord = normalizeSpanish(rawWord);
+    const normWord = normalizeFn(rawWord);
     const matched = targetWords.some(function (tw) { return wordsFuzzyMatch(normWord, tw, wordThreshold); });
     return { word: rawWord, matched: matched };
   });
