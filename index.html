@@ -72,6 +72,9 @@
   .missed-btn { background: #a33a3a; color: white; }
   .next-btn { background: #f4a21e; color: #1b1300; }
 
+  .peek-row { display: none; justify-content: center; margin-top: 14px; width: 100%; max-width: 360px; }
+  .peek-btn { padding: 12px 20px; font-size: 0.95rem; width: auto; user-select: none; -webkit-user-select: none; }
+
   #summary-screen { align-items: center; justify-content: center; text-align: center; gap: 10px; }
   #summary-screen h2 { font-size: 1.4rem; margin-bottom: 4px; }
   .summary-line { font-size: 1.1rem; color: #c3d3de; }
@@ -112,16 +115,16 @@
 
   <h2 id="options-directions-heading"></h2>
   <div class="toggle-row">
-    <input type="checkbox" id="dir-es-en">
+    <input type="radio" name="direction" id="dir-es-en">
     <label for="dir-es-en" id="dir-es-en-label"></label>
   </div>
   <div class="toggle-row">
-    <input type="checkbox" id="dir-es-en-audio">
-    <label for="dir-es-en-audio" id="dir-es-en-audio-label"></label>
+    <input type="radio" name="direction" id="dir-en-es">
+    <label for="dir-en-es" id="dir-en-es-label"></label>
   </div>
   <div class="toggle-row">
-    <input type="checkbox" id="dir-en-es">
-    <label for="dir-en-es" id="dir-en-es-label"></label>
+    <input type="radio" name="direction" id="dir-mixed">
+    <label for="dir-mixed" id="dir-mixed-label"></label>
   </div>
 
   <h2 id="options-categories-heading"></h2>
@@ -150,6 +153,10 @@
   <div class="toggle-row">
     <input type="checkbox" id="money-cents">
     <label for="money-cents" id="money-cents-label"></label>
+  </div>
+  <div class="slider-row">
+    <span id="money-max-label"></span> <span id="money-max-value" class="slider-value"></span>
+    <input type="range" id="money-max-slider" min="0" max="6" step="1">
   </div>
 
   <h2 id="options-session-length-heading"></h2>
@@ -183,6 +190,9 @@
   </div>
   <div class="next-row" id="next-row" style="display:none;">
     <button id="next-btn" class="next-btn"></button>
+  </div>
+  <div class="peek-row" id="peek-row">
+    <button id="peek-btn" class="secondary-btn peek-btn" type="button"></button>
   </div>
 </div>
 
