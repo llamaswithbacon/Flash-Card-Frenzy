@@ -1,4 +1,4 @@
-const CACHE_NAME = 'et-v4';
+const CACHE_NAME = 'et-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -27,6 +27,8 @@ self.addEventListener('activate', function (event) {
         keys.filter(function (key) { return key !== CACHE_NAME; })
             .map(function (key) { return caches.delete(key); })
       );
+    }).then(function () {
+      return self.clients.claim();
     })
   );
 });
@@ -37,4 +39,12 @@ self.addEventListener('fetch', function (event) {
       return cached || fetch(event.request);
     })
   );
+});
+
+// Lets the page tell a waiting worker to activate immediately, so the
+// "Update available" banner's reload takes effect right away.
+self.addEventListener('message', function (event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
