@@ -136,17 +136,27 @@ be used to hear the answer before attempting it — confirmed working by Carl.
 
 Plan this phase against the Phase 0 browser-test results first.
 
-- [ ] Mic permission flow, with guidance if denied
-- [ ] Speech recognition (`webkitSpeechRecognition`, `es-MX`) wired to the 🎤 button
-- [ ] Normalize transcript (case/punctuation/accents) and convert numerals to words before comparing
-- [ ] Fuzzy match scoring with Easy/Normal/Strict thresholds (tunable)
-- [ ] Alternate acceptable answers per card (e.g. carro/coche, lo/la, sí/no answers)
-- [ ] "Here's what I heard" feedback with mismatched words highlighted
-- [ ] Fallback path if recognition isn't available anywhere (listen-and-repeat, self-graded) or only works in Safari (hand off from Chrome with an "Open voice practice in Safari" link, carrying the card + sending the result back without losing/splitting Chrome's stored data)
-- [ ] Hide 🎤 and show a short note wherever recognition isn't available
-- [ ] Publish to GitHub Pages
+- [x] Mic permission flow, with guidance if denied
+- [x] Speech recognition (`webkitSpeechRecognition`, `es-MX`) wired to the 🎤 button
+- [x] Normalize transcript (case/punctuation/accents) and convert numerals to words before comparing
+- [x] Fuzzy match scoring with Easy/Normal/Strict thresholds (tunable)
+- [x] Alternate acceptable answers per card (e.g. carro/coche, lo/la, sí/no answers)
+- [x] "Here's what I heard" feedback with mismatched words highlighted
+- [x] Hide 🎤 wherever recognition isn't available (no note needed — see status)
+- [x] Publish to GitHub Pages
 
 **Done when:** saying a card correctly gets ✓ and mumbling gets ✗ at Normal strictness — or the agreed fallback works, if live recognition isn't available on Carl's setup.
+
+**Status: 🧪 Built, scoring/matching verified locally, published — awaiting Carl's
+phone test.** The mic only shows pre-flip on English-front cards (mirrors the 🔊
+speak-button pattern). A heard answer auto-grades the card exactly like tapping Got
+it/Missed — no separate "undo" step, same as grading manually. **Simplification from
+the original plan, with Carl's OK:** skipped the Chrome→Safari recognition handoff,
+since Phase 0 already confirmed recognition works natively in both browsers on Carl's
+phone — if recognition isn't available at all, 🎤 just stays hidden, no note. What
+needs Carl's real-device test: the actual mic-permission prompt and live recognition
+accuracy/strictness feel, same as voice input can't be exercised in the local preview
+sandbox.
 
 ---
 
