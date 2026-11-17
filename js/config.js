@@ -10,6 +10,18 @@ const SETTINGS_STORAGE_KEY = 'et-settings-v1';
 // settings since it's accumulated data, not a user preference).
 const STATS_STORAGE_KEY = 'et-stats-v1';
 
+// Key used to save card edits/deletes (as overrides keyed by built-in card
+// id) and Carl's own custom cards. Kept separate from seed-cards.json so a
+// future update to the shipped deck merges in rather than overwriting.
+const CUSTOM_CARDS_STORAGE_KEY = 'et-custom-cards-v1';
+
+// Manage Cards only covers the static seed-data categories — Numbers and
+// Money are procedurally generated, not editable cards.
+const MANAGEABLE_CATEGORIES = ['words', 'phrases', 'questions'];
+
+// How long since the last export before the main menu suggests a backup.
+const BACKUP_REMINDER_DAYS = 30;
+
 // Settings used the very first time the app runs, before Carl changes anything.
 const DEFAULT_SETTINGS = {
   direction: 'esToEn', // 'esToEn' | 'enToEs' | 'mixed' — exactly one, ever (audio arrives in Phase 5, for every direction)
@@ -101,5 +113,32 @@ const STRINGS = {
   micListening: '🎤 Listening…',
   micDenied: 'Microphone access was denied. You can enable it in Settings, or just use Got it / Missed.',
   micNoSpeech: "Didn't catch that — try again or grade yourself.",
-  heardLabel: 'Heard: '
+  heardLabel: 'Heard: ',
+
+  manageCardsButton: '✏️ Manage Cards',
+  manageCardsBack: '← Back',
+  filterWords: 'Words',
+  filterPhrases: 'Phrases',
+  filterQuestions: 'Questions',
+  addCardButton: '+ Add card',
+  editCardButton: '✏️',
+  deleteCardButton: '🗑️',
+  deleteCardConfirm: 'This permanently removes "{card}" — delete it?',
+  exportButton: '⬇️ Export backup',
+  importButton: '⬆️ Import backup',
+  importError: "That file doesn't look like a valid backup.",
+  importConfirm: 'This replaces your current cards and settings — continue?',
+
+  addCardHeading: 'Add a card',
+  editCardHeading: 'Edit card',
+  cardFormValidation: 'Spanish and English text are both required.',
+  formCategoryLabel: 'Category',
+  formSpanishLabel: 'Spanish',
+  formEnglishLabel: 'English',
+  formAcceptableLabel: 'Other acceptable Spanish answers (one per line, optional)',
+  formSiLabel: 'Sí answer',
+  formNoLabel: 'No answer',
+  formSaveButton: 'Save',
+
+  backupReminderText: "It's been a while — back up your cards?"
 };
