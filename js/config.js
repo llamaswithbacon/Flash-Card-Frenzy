@@ -8,11 +8,7 @@ const SETTINGS_STORAGE_KEY = 'et-settings-v1';
 
 // Settings used the very first time the app runs, before Carl changes anything.
 const DEFAULT_SETTINGS = {
-  directions: {
-    esToEn: true,   // Spanish front -> English back
-    esEnAudio: false, // Spanish + English front -> pronunciation/audio back (audio arrives in Phase 5)
-    enToEs: false   // English front -> Spanish back
-  },
+  direction: 'esToEn', // 'esToEn' | 'enToEs' | 'mixed' — exactly one, ever (audio arrives in Phase 5, for every direction)
   categories: {
     words: true,
     phrases: true,
@@ -23,9 +19,13 @@ const DEFAULT_SETTINGS = {
     wholeDollars: true,
     cents: true
   },
+  moneyMax: 1000,
   sessionLength: 10,
   showTimer: false
 };
+
+// Stops for the Money "maximum amount" slider.
+const MONEY_MAX_STEPS = [10, 20, 50, 100, 200, 500, 1000];
 
 const CATEGORY_LABELS = {
   words: 'Words',
@@ -52,9 +52,8 @@ const STRINGS = {
 
   optionsDirectionsHeading: 'Card direction',
   directionEsToEn: 'Spanish front → English back',
-  directionEsEnAudio: 'Spanish + English front → pronunciation back',
   directionEnToEs: 'English front → Spanish back',
-  lastDirectionMessage: 'At least one card direction has to stay checked.',
+  directionMixed: 'Mixed (both directions)',
 
   optionsCategoriesHeading: 'Categories',
   lastCategoryMessage: 'At least one category has to stay on.',
@@ -63,10 +62,11 @@ const STRINGS = {
   moneyWholeDollars: 'Whole dollars (e.g. $47)',
   moneyCents: 'Dollars and cents (e.g. $47.83)',
   lastMoneySubMessage: 'At least one Money option has to stay on.',
+  moneyMaxLabel: 'Maximum amount:',
 
   optionsSessionLengthHeading: 'Session length',
   optionsTimerHeading: 'Timer',
   showTimerLabel: 'Show session timer during practice',
 
-  audioComingSoon: 'Audio playback arrives in Phase 5.'
+  peekFront: '👁 Hold to see front'
 };
