@@ -104,12 +104,7 @@ choice not being exclusive, and the dollars-and-cents deck rarely producing a cl
 
 **Done when:** total practice time adds up correctly across several sessions and app restarts/backgrounding.
 
-**Status: 🧪 Built, tested locally, and published — awaiting Carl's phone test.** The
-pause-aware clock and frequent-save logic were verified directly (simulated
-backgrounding, confirmed the lifetime total stops/resumes correctly and saves every
-second). What specifically needs Carl's real-device check: does backgrounding the app
-at work (switching to another app, locking the phone) correctly pause the timer, and
-does the total survive force-closing the app mid-session.
+**Status: ✅ Phase 4 complete, confirmed by Carl on his iPhone.**
 
 ---
 
