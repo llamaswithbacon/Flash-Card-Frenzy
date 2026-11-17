@@ -33,8 +33,10 @@ const DEFAULT_SETTINGS = {
 // Stops for the Money "maximum amount" slider.
 const MONEY_MAX_STEPS = [10, 20, 50, 100, 200, 500, 1000];
 
-// How closely a spoken answer has to match before it counts as correct, by
-// strictness level. Tunable here without touching the matching logic.
+// How closely each individual word has to be pronounced/heard to count as a
+// match, by strictness level — every word in the answer still has to be
+// said; this only controls how forgiving the matching is per word. Tunable
+// here without touching the matching logic.
 const VOICE_MATCH_THRESHOLDS = { easy: 0.6, normal: 0.75, strict: 0.9 };
 
 const CATEGORY_LABELS = {
