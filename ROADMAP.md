@@ -194,14 +194,34 @@ they're generated, not static cards, per the roadmap's own scope.
 
 ## Phase 8: Polish
 
-- [ ] Dark mode check
-- [ ] Large text / big tap targets double-checked, no accidental zoom or text selection
-- [ ] Nicer app icon and splash screen
-- [ ] Simple stats: accuracy per card, streak
-- [ ] Optional: "practice my weakest cards" mode
-- [ ] Publish to GitHub Pages
+- [x] Dark mode check — **expanded, with Carl's OK:** a real light/dark
+      toggle in Options, not just a check of the existing dark theme
+- [x] Large text / big tap targets double-checked, no accidental zoom or text selection
+- [x] Nicer app icon and splash screen — **dropped, Carl's call:** he'll
+      supply and swap in his own icon image later (see
+      [README.md](README.md#replacing-the-app-icon)); not designed here
+- [x] Simple stats: accuracy per card, streak — streak is a **daily
+      practice streak**, not a correct-answers-in-a-row counter
+- [x] "practice my weakest cards" mode
+- [x] Publish to GitHub Pages
 
 **Done when:** Carl is happy using it daily at work.
+
+**Status: 🧪 Built, tested locally, published — awaiting Carl's phone
+test.** Verified locally: light/dark toggle across every screen (menu,
+cards front/back, Options, Manage Cards, card form, summary) with no
+regression to the default dark theme; resized tap targets (Manage Cards
+✏️/🗑️, backup-reminder ✕, topbar buttons) all measure 44x44px or larger;
+per-card accuracy records correctly on grading and survives a reload
+(merge-against-seed, same mechanism as Phase 7 edits); the daily-streak
+logic (continues on a 1-day gap, resets on a longer gap, hides on the menu
+once stale) tested through all its branches by driving the stored date
+backward; Weakest Cards sorts candidates by accuracy correctly, respects
+the session-length cap and current category toggles, and shows the "not
+enough history yet" message when no card has enough reps. What needs
+Carl's real-device check: how the light theme and the resized buttons
+actually feel in hand, and the streak holding up across real calendar
+days (can't be faked from here).
 
 ---
 
