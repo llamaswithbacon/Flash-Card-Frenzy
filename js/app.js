@@ -40,7 +40,8 @@ function loadSettings() {
     slowSpeed: typeof saved.slowSpeed === 'boolean' ? saved.slowSpeed : DEFAULT_SETTINGS.slowSpeed,
     voiceName: typeof saved.voiceName === 'string' ? saved.voiceName : DEFAULT_SETTINGS.voiceName,
     voicePracticeEnabled: typeof saved.voicePracticeEnabled === 'boolean' ? saved.voicePracticeEnabled : DEFAULT_SETTINGS.voicePracticeEnabled,
-    voiceStrictness: saved.voiceStrictness || DEFAULT_SETTINGS.voiceStrictness
+    voiceStrictness: saved.voiceStrictness || DEFAULT_SETTINGS.voiceStrictness,
+    theme: saved.theme === 'light' ? 'light' : DEFAULT_SETTINGS.theme
   };
 }
 
@@ -50,6 +51,16 @@ function saveSettings() {
 
 let settings = loadSettings();
 
+// Applies the current theme to the page and keeps the status-bar color
+// (meta theme-color) in sync; manifest.json's own theme/background colors
+// stay fixed on dark since a static manifest can't react to this setting.
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeColorMeta) themeColorMeta.setAttribute('content', settings.theme === 'light' ? '#f4f6f8' : '#1b4f72');
+}
+applyTheme();
+
 // ---- Lifetime practice-time stats ----
 function loadStats() {
   let saved = {};
@@ -58,7 +69,11 @@ function loadStats() {
   } catch (e) {
     saved = {};
   }
-  return { totalPracticeMs: typeof saved.totalPracticeMs === 'number' ? saved.totalPracticeMs : 0 };
+  return {
+    totalPracticeMs: typeof saved.totalPracticeMs === 'number' ? saved.totalPracticeMs : 0,
+    lastPracticeDate: typeof saved.lastPracticeDate === 'string' ? saved.lastPracticeDate : null,
+    currentStreak: typeof saved.currentStreak === 'number' ? saved.currentStreak : 0
+  };
 }
 
 function saveStats() {
@@ -93,6 +108,7 @@ let cardData = loadCardData();
 // ---- Static text ----
 document.getElementById('app-title').textContent = STRINGS.appTitle;
 document.getElementById('play-btn').textContent = STRINGS.playButton;
+document.getElementById('weakest-btn').textContent = STRINGS.weakestButton;
 document.getElementById('money-btn').textContent = STRINGS.moneyButton;
 document.getElementById('options-btn').textContent = STRINGS.optionsButton;
 document.getElementById('options-back-btn').textContent = STRINGS.backButton;
@@ -141,6 +157,9 @@ document.getElementById('voice-normal-label').textContent = STRINGS.voiceStrictn
 document.getElementById('voice-strict-label').textContent = STRINGS.voiceStrictnessStrict;
 document.getElementById('mic-btn').textContent = STRINGS.micButton;
 
+document.getElementById('options-appearance-heading').textContent = STRINGS.optionsAppearanceHeading;
+document.getElementById('light-mode-label').textContent = STRINGS.lightModeLabel;
+
 document.getElementById('manage-cards-btn').textContent = STRINGS.manageCardsButton;
 document.getElementById('manage-cards-back-btn').textContent = STRINGS.manageCardsBack;
 document.getElementById('filter-words').textContent = STRINGS.filterWords;
@@ -164,16 +183,48 @@ document.getElementById('form-save-btn').textContent = STRINGS.formSaveButton;
 
 document.getElementById('backup-reminder-text').textContent = STRINGS.backupReminderText;
 
-// ---- Main menu: lifetime practice-time display ----
+// ---- Main menu: lifetime practice-time + streak display ----
 const totalPracticeTimeEl = document.getElementById('total-practice-time');
+const streakLineEl = document.getElementById('streak-line');
+
+function dateStr(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// Both dates are 'YYYY-MM-DD', which Date parses as UTC midnight, so this
+// stays correct across DST changes regardless of local timezone.
+function daysBetween(aStr, bStr) {
+  return Math.round((new Date(bStr) - new Date(aStr)) / 86400000);
+}
 
 function renderMenuStats() {
   totalPracticeTimeEl.textContent = STRINGS.totalPracticeLabel + formatDuration(stats.totalPracticeMs);
+
+  const daysSince = stats.lastPracticeDate ? daysBetween(stats.lastPracticeDate, dateStr(new Date())) : Infinity;
+  if (stats.currentStreak > 0 && daysSince <= 1) {
+    streakLineEl.textContent = STRINGS.streakLabel.replace('{n}', stats.currentStreak);
+    streakLineEl.style.display = 'block';
+  } else {
+    streakLineEl.style.display = 'none';
+  }
 }
 
 renderMenuStats();
 
+// Counts a day as practiced the first time a session starts that day;
+// called once from startSessionWithBuilder(). A gap of more than one day
+// since the last practiced day resets the streak to 1 instead of continuing it.
+function updateStreak() {
+  const today = dateStr(new Date());
+  if (stats.lastPracticeDate === today) return;
+  stats.currentStreak = (stats.lastPracticeDate && daysBetween(stats.lastPracticeDate, today) === 1)
+    ? stats.currentStreak + 1 : 1;
+  stats.lastPracticeDate = today;
+  saveStats();
+}
+
 // ---- Options screen: wire controls to settings ----
+const lightModeCheckbox = document.getElementById('light-mode');
 const dirEsEn = document.getElementById('dir-es-en');
 const dirEnEs = document.getElementById('dir-en-es');
 const dirMixed = document.getElementById('dir-mixed');
@@ -202,6 +253,8 @@ const voiceNormal = document.getElementById('voice-normal');
 const voiceStrict = document.getElementById('voice-strict');
 
 function renderOptionsScreen() {
+  lightModeCheckbox.checked = settings.theme === 'light';
+
   dirEsEn.checked = settings.direction === 'esToEn';
   dirEnEs.checked = settings.direction === 'enToEs';
   dirMixed.checked = settings.direction === 'mixed';
@@ -247,6 +300,12 @@ function guardAtLeastOne(checkboxes, changedBox, message) {
   }
   return true;
 }
+
+lightModeCheckbox.addEventListener('change', function () {
+  settings.theme = lightModeCheckbox.checked ? 'light' : 'dark';
+  saveSettings();
+  applyTheme();
+});
 
 [dirEsEn, dirEnEs, dirMixed].forEach(function (radio) {
   radio.addEventListener('change', function () {
@@ -421,6 +480,15 @@ function renderManageCardsList() {
     englishLine.textContent = card.english;
     textWrap.appendChild(spanishLine);
     textWrap.appendChild(englishLine);
+
+    if (card.timesSeen > 0) {
+      const statsLine = document.createElement('div');
+      statsLine.className = 'card-row-stats';
+      const pct = Math.round(100 * card.timesCorrect / card.timesSeen);
+      statsLine.textContent = STRINGS.cardStatsLabel
+        .replace('{pct}', pct).replace('{correct}', card.timesCorrect).replace('{seen}', card.timesSeen);
+      textWrap.appendChild(statsLine);
+    }
 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
@@ -690,17 +758,14 @@ function buildVocabPool() {
   return pool;
 }
 
-function buildSession() {
-  const pool = buildVocabPool();
-  if (pool.length === 0) {
-    alert(STRINGS.noCardsEnabled);
-    return null;
-  }
-
+// Shuffles `pool` into a queue of exactly `length` entries, reshuffling and
+// looping back through the pool if it's smaller than `length` — shared by
+// every vocab-style session builder below.
+function buildShuffledQueue(pool, length) {
   const queue = [];
   let shuffled = shuffle(pool.slice());
   let i = 0;
-  while (queue.length < settings.sessionLength) {
+  while (queue.length < length) {
     if (i >= shuffled.length) {
       shuffled = shuffle(pool.slice());
       i = 0;
@@ -708,12 +773,35 @@ function buildSession() {
     queue.push({ card: shuffled[i], direction: pickDirection() });
     i++;
   }
+  return queue;
+}
 
-  return {
-    queue,
-    index: 0,
-    correct: 0
-  };
+function buildSession() {
+  const pool = buildVocabPool();
+  if (pool.length === 0) {
+    alert(STRINGS.noCardsEnabled);
+    return null;
+  }
+  return { queue: buildShuffledQueue(pool, settings.sessionLength), index: 0, correct: 0 };
+}
+
+// Weakest cards: ranks currently-enabled, manageable cards by accuracy
+// (lowest first) and practices only the worst of them. Money/Numbers are
+// generated fresh each session and have no stable per-card accuracy, so
+// they're excluded the same way Manage Cards already excludes them.
+function buildWeakestSession() {
+  const cats = enabledCategories();
+  const pool = allCards.filter(function (c) {
+    return c.isEnabled && MANAGEABLE_CATEGORIES.includes(c.category) &&
+      cats.includes(c.category) && c.timesSeen >= WEAKEST_MIN_SEEN;
+  });
+  if (pool.length === 0) {
+    alert(STRINGS.notEnoughWeakestData);
+    return null;
+  }
+  pool.sort(function (a, b) { return (a.timesCorrect / a.timesSeen) - (b.timesCorrect / b.timesSeen); });
+  const weakest = pool.slice(0, Math.min(settings.sessionLength, pool.length));
+  return { queue: buildShuffledQueue(weakest, settings.sessionLength), index: 0, correct: 0 };
 }
 
 // Money session: cards are generated fresh each time, never stored.
@@ -973,8 +1061,30 @@ micBtn.addEventListener('click', function () {
   recognition.start();
 });
 
+// Persists a practice result onto the card itself — skipped for Money/
+// Numbers cards, which are generated fresh each session and were already
+// excluded from Manage Cards for the same reason. Reuses the Phase 7
+// merge-storage mechanism (overrides for built-ins, direct mutation for
+// custom cards) so it survives reloads and future seed-data updates.
+function recordCardResult(card, isCorrect) {
+  if (!card || !MANAGEABLE_CATEGORIES.includes(card.category)) return;
+  card.timesSeen = (card.timesSeen || 0) + 1;
+  if (isCorrect) card.timesCorrect = (card.timesCorrect || 0) + 1;
+  if (card.isBuiltIn) {
+    cardData.overrides[card.id] = Object.assign({}, cardData.overrides[card.id], {
+      timesSeen: card.timesSeen, timesCorrect: card.timesCorrect
+    });
+  } else {
+    const custom = cardData.customCards.find(function (c) { return c.id === card.id; });
+    if (custom) { custom.timesSeen = card.timesSeen; custom.timesCorrect = card.timesCorrect; }
+  }
+  saveCardData();
+}
+
 function grade(isCorrect) {
+  const entry = session.queue[session.index];
   if (isCorrect) session.correct++;
+  recordCardResult(entry.card, isCorrect);
   gradingRow.style.display = 'none';
   nextRow.style.display = 'flex';
 }
@@ -1039,6 +1149,7 @@ function startSessionWithBuilder(builderFn) {
   session = s;
   sessionActiveMs = 0;
   micDisabledThisSession = false;
+  updateStreak();
   resumeActiveClock();
   showScreen('session');
   renderCard();
@@ -1058,6 +1169,7 @@ function startSessionWithBuilder(builderFn) {
 
 // ---- Navigation ----
 document.getElementById('play-btn').addEventListener('click', () => startSessionWithBuilder(buildSession));
+document.getElementById('weakest-btn').addEventListener('click', () => startSessionWithBuilder(buildWeakestSession));
 document.getElementById('money-btn').addEventListener('click', () => startSessionWithBuilder(buildMoneySession));
 document.getElementById('play-again-btn').addEventListener('click', () => startSessionWithBuilder(lastBuilder));
 document.getElementById('options-btn').addEventListener('click', function () {
