@@ -372,9 +372,13 @@ function renderCard() {
   if (direction === 'enToEs') {
     cardFront.textContent = card.english;
     cardBack.textContent = card.spanish;
+    // Spanish is on the back here — hide the speaker until the card is flipped,
+    // so it can't be used to hear the answer before attempting it.
+    speakBtn.style.display = 'none';
   } else {
     cardFront.textContent = card.spanish;
     cardBack.textContent = card.english;
+    speakBtn.style.display = '';
   }
 
   if (card.category === 'questions') {
@@ -400,10 +404,12 @@ cardInner.addEventListener('click', function () {
     gradingRow.style.display = 'flex';
     peekRow.style.display = 'flex';
 
-    // Spanish just became visible on the back; speak it now.
+    // Spanish just became visible on the back; reveal the speaker and, if
+    // auto-play is on, speak it now.
     const entry = session.queue[session.index];
-    if (settings.autoPlay && entry.direction === 'enToEs') {
-      speakSpanish(entry.card.spanish);
+    if (entry.direction === 'enToEs') {
+      speakBtn.style.display = '';
+      if (settings.autoPlay) speakSpanish(entry.card.spanish);
     }
   }
 });
