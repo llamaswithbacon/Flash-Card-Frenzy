@@ -24,9 +24,10 @@ function loadSettings() {
     saved = {};
   }
   return {
-    directions: Object.assign({}, DEFAULT_SETTINGS.directions, saved.directions),
+    direction: saved.direction || DEFAULT_SETTINGS.direction,
     categories: Object.assign({}, DEFAULT_SETTINGS.categories, saved.categories),
     moneySub: Object.assign({}, DEFAULT_SETTINGS.moneySub, saved.moneySub),
+    moneyMax: saved.moneyMax || DEFAULT_SETTINGS.moneyMax,
     sessionLength: saved.sessionLength || DEFAULT_SETTINGS.sessionLength,
     showTimer: typeof saved.showTimer === 'boolean' ? saved.showTimer : DEFAULT_SETTINGS.showTimer
   };
@@ -54,8 +55,9 @@ document.getElementById('summary-menu-btn').textContent = STRINGS.mainMenu;
 
 document.getElementById('options-directions-heading').textContent = STRINGS.optionsDirectionsHeading;
 document.getElementById('dir-es-en-label').textContent = STRINGS.directionEsToEn;
-document.getElementById('dir-es-en-audio-label').textContent = STRINGS.directionEsEnAudio;
 document.getElementById('dir-en-es-label').textContent = STRINGS.directionEnToEs;
+document.getElementById('dir-mixed-label').textContent = STRINGS.directionMixed;
+
 document.getElementById('options-categories-heading').textContent = STRINGS.optionsCategoriesHeading;
 document.getElementById('cat-words-label').textContent = CATEGORY_LABELS.words;
 document.getElementById('cat-phrases-label').textContent = CATEGORY_LABELS.phrases;
@@ -65,15 +67,18 @@ document.getElementById('cat-numbers-label').textContent = CATEGORY_LABELS.numbe
 document.getElementById('options-money-heading').textContent = STRINGS.optionsMoneyHeading;
 document.getElementById('money-whole-label').textContent = STRINGS.moneyWholeDollars;
 document.getElementById('money-cents-label').textContent = STRINGS.moneyCents;
+document.getElementById('money-max-label').textContent = STRINGS.moneyMaxLabel;
 
 document.getElementById('options-session-length-heading').textContent = STRINGS.optionsSessionLengthHeading;
 document.getElementById('options-timer-heading').textContent = STRINGS.optionsTimerHeading;
 document.getElementById('show-timer-label').textContent = STRINGS.showTimerLabel;
 
+document.getElementById('peek-btn').textContent = STRINGS.peekFront;
+
 // ---- Options screen: wire controls to settings ----
 const dirEsEn = document.getElementById('dir-es-en');
-const dirEsEnAudio = document.getElementById('dir-es-en-audio');
 const dirEnEs = document.getElementById('dir-en-es');
+const dirMixed = document.getElementById('dir-mixed');
 
 const catWords = document.getElementById('cat-words');
 const catPhrases = document.getElementById('cat-phrases');
@@ -81,15 +86,17 @@ const catQuestions = document.getElementById('cat-questions');
 const catNumbers = document.getElementById('cat-numbers');
 const moneyWhole = document.getElementById('money-whole');
 const moneyCents = document.getElementById('money-cents');
+const moneyMaxSlider = document.getElementById('money-max-slider');
+const moneyMaxValue = document.getElementById('money-max-value');
 
 const sessionLengthSlider = document.getElementById('session-length-slider');
 const sessionLengthValue = document.getElementById('session-length-value');
 const showTimerCheckbox = document.getElementById('show-timer');
 
 function renderOptionsScreen() {
-  dirEsEn.checked = settings.directions.esToEn;
-  dirEsEnAudio.checked = settings.directions.esEnAudio;
-  dirEnEs.checked = settings.directions.enToEs;
+  dirEsEn.checked = settings.direction === 'esToEn';
+  dirEnEs.checked = settings.direction === 'enToEs';
+  dirMixed.checked = settings.direction === 'mixed';
 
   catWords.checked = settings.categories.words;
   catPhrases.checked = settings.categories.phrases;
@@ -98,6 +105,10 @@ function renderOptionsScreen() {
 
   moneyWhole.checked = settings.moneySub.wholeDollars;
   moneyCents.checked = settings.moneySub.cents;
+
+  const maxIdx = MONEY_MAX_STEPS.indexOf(settings.moneyMax);
+  moneyMaxSlider.value = maxIdx === -1 ? MONEY_MAX_STEPS.length - 1 : maxIdx;
+  moneyMaxValue.textContent = '$' + MONEY_MAX_STEPS[moneyMaxSlider.value];
 
   sessionLengthSlider.value = settings.sessionLength;
   sessionLengthValue.textContent = settings.sessionLength + ' cards';
@@ -118,13 +129,11 @@ function guardAtLeastOne(checkboxes, changedBox, message) {
   return true;
 }
 
-[dirEsEn, dirEsEnAudio, dirEnEs].forEach(function (box) {
-  box.addEventListener('change', function () {
-    const group = [dirEsEn, dirEsEnAudio, dirEnEs];
-    if (!guardAtLeastOne(group, box, STRINGS.lastDirectionMessage)) return;
-    settings.directions.esToEn = dirEsEn.checked;
-    settings.directions.esEnAudio = dirEsEnAudio.checked;
-    settings.directions.enToEs = dirEnEs.checked;
+[dirEsEn, dirEnEs, dirMixed].forEach(function (radio) {
+  radio.addEventListener('change', function () {
+    if (dirEsEn.checked) settings.direction = 'esToEn';
+    else if (dirEnEs.checked) settings.direction = 'enToEs';
+    else settings.direction = 'mixed';
     saveSettings();
   });
 });
@@ -149,6 +158,12 @@ function guardAtLeastOne(checkboxes, changedBox, message) {
     settings.moneySub.cents = moneyCents.checked;
     saveSettings();
   });
+});
+
+moneyMaxSlider.addEventListener('input', function () {
+  settings.moneyMax = MONEY_MAX_STEPS[parseInt(moneyMaxSlider.value, 10)];
+  moneyMaxValue.textContent = '$' + settings.moneyMax;
+  saveSettings();
 });
 
 sessionLengthSlider.addEventListener('input', function () {
@@ -193,17 +208,16 @@ function enabledCategories() {
   return Object.keys(settings.categories).filter(cat => settings.categories[cat]);
 }
 
-function enabledDirections() {
-  return Object.keys(settings.directions).filter(dir => settings.directions[dir]);
-}
-
 function enabledMoneyKinds() {
   return Object.keys(settings.moneySub).filter(kind => settings.moneySub[kind]);
 }
 
+// Resolves to an actual per-card direction; 'mixed' picks one at random for each card.
 function pickDirection() {
-  const options = enabledDirections();
-  return options[Math.floor(Math.random() * options.length)];
+  if (settings.direction === 'mixed') {
+    return Math.random() < 0.5 ? 'esToEn' : 'enToEs';
+  }
+  return settings.direction;
 }
 
 // Vocabulary pool: seed cards (Words/Phrases/Common Questions) plus freshly
@@ -250,7 +264,7 @@ function buildMoneySession() {
   const queue = [];
   for (let i = 0; i < settings.sessionLength; i++) {
     const kind = kinds[Math.floor(Math.random() * kinds.length)] === 'wholeDollars' ? 'whole' : 'cents';
-    queue.push({ card: generateMoneyCard(kind), direction: pickDirection() });
+    queue.push({ card: generateMoneyCard(kind, settings.moneyMax), direction: pickDirection() });
   }
 
   return {
@@ -267,6 +281,8 @@ const cardFront = document.getElementById('card-front');
 const cardBack = document.getElementById('card-back');
 const gradingRow = document.getElementById('grading-row');
 const nextRow = document.getElementById('next-row');
+const peekRow = document.getElementById('peek-row');
+const peekBtn = document.getElementById('peek-btn');
 const progressText = document.getElementById('progress-text');
 const timerText = document.getElementById('timer-text');
 
@@ -284,6 +300,7 @@ function renderCard() {
   cardInner.classList.remove('flipped');
   gradingRow.style.display = 'none';
   nextRow.style.display = 'none';
+  peekRow.style.display = 'none';
 
   cardFront.innerHTML = '';
   cardBack.innerHTML = '';
@@ -291,10 +308,6 @@ function renderCard() {
   if (direction === 'enToEs') {
     cardFront.textContent = card.english;
     addSubLine(cardBack, card.spanish);
-  } else if (direction === 'esEnAudio') {
-    addSubLine(cardFront, card.spanish);
-    addSubLine(cardFront, card.english);
-    addSubLine(cardBack, card.pronunciationHint || STRINGS.audioComingSoon);
   } else {
     cardFront.textContent = card.spanish;
     addSubLine(cardBack, card.english);
@@ -312,8 +325,23 @@ cardInner.addEventListener('click', function () {
   if (!cardInner.classList.contains('flipped')) {
     cardInner.classList.add('flipped');
     gradingRow.style.display = 'flex';
+    peekRow.style.display = 'flex';
   }
 });
+
+// Hold the peek button to see the front again; release to go back to the back.
+function peekAtFront() {
+  cardInner.classList.remove('flipped');
+}
+function stopPeeking() {
+  cardInner.classList.add('flipped');
+}
+peekBtn.addEventListener('mousedown', peekAtFront);
+peekBtn.addEventListener('mouseup', stopPeeking);
+peekBtn.addEventListener('mouseleave', stopPeeking);
+peekBtn.addEventListener('touchstart', function (e) { e.preventDefault(); peekAtFront(); });
+peekBtn.addEventListener('touchend', stopPeeking);
+peekBtn.addEventListener('touchcancel', stopPeeking);
 
 function grade(isCorrect) {
   if (isCorrect) session.correct++;
@@ -347,14 +375,15 @@ function stopTimer() {
   }
 }
 
-function finishSession() {
+function finishSession(cardsDone) {
   stopTimer();
+  const done = typeof cardsDone === 'number' ? cardsDone : session.queue.length;
   const elapsed = formatElapsed(session.startedAt);
 
   document.getElementById('summary-cards').textContent =
-    'Cards done: ' + session.queue.length;
+    'Cards done: ' + done;
   document.getElementById('summary-correct').textContent =
-    'Correct: ' + session.correct + ' / ' + session.queue.length;
+    'Correct: ' + session.correct + ' / ' + done;
   document.getElementById('summary-time').textContent =
     'Time: ' + elapsed;
 
@@ -390,7 +419,7 @@ document.getElementById('options-btn').addEventListener('click', function () {
 });
 document.getElementById('options-back-btn').addEventListener('click', () => showScreen('menu'));
 document.getElementById('end-session-btn').addEventListener('click', function () {
-  stopTimer();
-  showScreen('menu');
+  const currentCardGraded = nextRow.style.display === 'flex';
+  finishSession(session.index + (currentCardGraded ? 1 : 0));
 });
 document.getElementById('summary-menu-btn').addEventListener('click', () => showScreen('menu'));
