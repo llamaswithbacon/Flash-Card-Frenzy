@@ -172,13 +172,35 @@ function similarityRatio(a, b) {
   return 1 - levenshteinDistance(a, b) / maxLen;
 }
 
+function wordsFuzzyMatch(a, b, wordThreshold) {
+  return a === b || similarityRatio(a, b) >= wordThreshold;
+}
+
+// Scores how many of a target answer's words were actually heard (word-level
+// recall) rather than a whole-string character ratio. A whole-string ratio
+// dilutes a single wrong/mispronounced word across a long phrase — "Abra el
+// cofre, por favor" with one botched word still looks ~90% right character-
+// for-character — so it under-detects exactly the mistake grading needs to
+// catch. Scoring per word instead makes one wrong word cost one word, no
+// matter how long the phrase is. wordThreshold is also reused as the
+// per-word fuzzy cutoff, so Easy/Normal/Strict controls both how close each
+// word has to sound and how many of them have to match.
+function scoreTranscriptAgainstAnswer(transcript, answer, wordThreshold) {
+  const targetWords = normalizeSpanish(answer).split(' ').filter(Boolean);
+  const heardWords = normalizeSpanish(transcript).split(' ').filter(Boolean);
+  if (targetWords.length === 0) return 0;
+  const matchedCount = targetWords.filter(function (tw) {
+    return heardWords.some(function (hw) { return wordsFuzzyMatch(tw, hw, wordThreshold); });
+  }).length;
+  return matchedCount / targetWords.length;
+}
+
 // Scores a heard transcript against a card's Spanish answer plus any
 // acceptable alternates, returning whichever one matched best.
-function scoreAgainstAnswers(transcript, answers) {
-  const normalizedTranscript = normalizeSpanish(transcript);
+function scoreAgainstAnswers(transcript, answers, wordThreshold) {
   let best = { score: 0, answer: answers[0] || '' };
   answers.forEach(function (answer) {
-    const score = similarityRatio(normalizedTranscript, normalizeSpanish(answer));
+    const score = scoreTranscriptAgainstAnswer(transcript, answer, wordThreshold);
     if (score > best.score) best = { score: score, answer: answer };
   });
   return best;
@@ -186,14 +208,12 @@ function scoreAgainstAnswers(transcript, answers) {
 
 // Per-word match info for "here's what I heard" feedback, against whichever
 // answer scored best in scoreAgainstAnswers.
-function wordMatchHighlights(transcript, bestAnswer) {
+function wordMatchHighlights(transcript, bestAnswer, wordThreshold) {
   const targetWords = normalizeSpanish(bestAnswer).split(' ').filter(Boolean);
   const rawWords = transcript.trim().split(/\s+/).filter(Boolean);
   return rawWords.map(function (rawWord) {
     const normWord = normalizeSpanish(rawWord);
-    const matched = targetWords.some(function (tw) {
-      return normWord === tw || similarityRatio(normWord, tw) >= 0.75;
-    });
+    const matched = targetWords.some(function (tw) { return wordsFuzzyMatch(normWord, tw, wordThreshold); });
     return { word: rawWord, matched: matched };
   });
 }
