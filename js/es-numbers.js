@@ -43,8 +43,7 @@ function numberToWords(n, apocope) {
   return words;
 }
 
-// Combines a dollar amount and cent amount into a spoken phrase, e.g.
-// amountToWords(47, 83) -> "cuarenta y siete dólares con ochenta y tres centavos".
+// "X dólares con Y centavos" phrasing, dropping whichever side is zero.
 function amountToWords(dollars, cents) {
   const parts = [];
   if (dollars > 0) {
@@ -61,17 +60,20 @@ function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Shop-realistic prices, used most of the time so practice feels like real life.
+// Realistic shop-price amounts to weight the generator toward, per the brief.
 const REALISTIC_PRICES = [
   15.00, 19.99, 24.99, 29.99, 34.99, 39.99, 45.50, 49.99, 59.99, 69.95,
   79.99, 89.95, 99.00, 109.99, 129.00, 149.99, 179.95, 189.99, 229.99,
   249.00, 299.99, 349.99, 399.00, 449.99, 499.00, 599.00, 749.00, 899.00
 ];
 
-function generateMoneyCard(kind) {
+// kind: 'whole' or 'cents'. maxAmount caps the dollar amount (default $1000).
+function generateMoneyCard(kind, maxAmount) {
+  maxAmount = maxAmount || 1000;
+  const eligiblePrices = REALISTIC_PRICES.filter(p => p <= maxAmount);
   let dollars, cents;
-  if (Math.random() < 0.65) {
-    const base = REALISTIC_PRICES[randomInt(0, REALISTIC_PRICES.length - 1)];
+  if (eligiblePrices.length > 0 && Math.random() < 0.65) {
+    const base = eligiblePrices[randomInt(0, eligiblePrices.length - 1)];
     if (kind === 'whole') {
       dollars = Math.round(base);
       cents = 0;
@@ -79,9 +81,14 @@ function generateMoneyCard(kind) {
       dollars = Math.floor(base);
       cents = Math.round((base - dollars) * 100);
     }
+  } else if (kind === 'whole') {
+    dollars = randomInt(1, Math.max(1, Math.floor(maxAmount)));
+    cents = 0;
   } else {
-    dollars = randomInt(1, 999);
-    cents = kind === 'whole' ? 0 : randomInt(0, 99);
+    const maxCents = Math.max(1, Math.round(maxAmount * 100));
+    const totalCents = randomInt(1, maxCents);
+    dollars = Math.floor(totalCents / 100);
+    cents = totalCents % 100;
   }
 
   const english = kind === 'whole' ? ('$' + dollars) : ('$' + dollars + '.' + String(cents).padStart(2, '0'));
@@ -92,6 +99,7 @@ function generateMoneyCard(kind) {
   };
 }
 
+// Plain counting cards (0-100) for the vocab Numbers category — no "dólares".
 function generateNumberCard() {
   const value = randomInt(0, 100);
   return {
@@ -105,4 +113,3 @@ function generateNumberCardPool(count) {
   for (let i = 0; i < count; i++) pool.push(generateNumberCard());
   return pool;
 }
-
