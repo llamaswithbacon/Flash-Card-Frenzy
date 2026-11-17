@@ -174,16 +174,28 @@ unchanged and still confirmed).
 
 ## Phase 7: Manage cards + backup
 
-- [ ] "Manage cards" screen: add/edit/delete/enable any card (Words, Phrases, Common Questions)
-- [ ] Per-card on/off toggle ("white list / black list")
-- [ ] Edits and new cards survive future publishes (seed data merges, never overwrites)
-- [ ] Export cards/settings/stats to a JSON file (download / share sheet)
-- [ ] Import from a JSON file (file picker)
-- [ ] "Back up your cards" reminder if 30+ days since last export
-- [ ] README updated with how to add/edit cards
-- [ ] Publish to GitHub Pages
+- [x] "Manage cards" screen: add/edit/delete/enable any card (Words, Phrases, Common Questions)
+- [x] Per-card on/off toggle ("white list / black list") — **expanded, with Carl's
+      OK:** every card, built-in or custom, can also be fully deleted, not just
+      disabled (with a confirm step first, since that's harder to undo)
+- [x] Edits and new cards survive future publishes (seed data merges, never overwrites)
+- [x] Export cards/settings/stats to a JSON file (download / share sheet)
+- [x] Import from a JSON file (file picker)
+- [x] "Back up your cards" reminder if 30+ days since last export
+- [x] README updated with how to add/edit cards
+- [x] Publish to GitHub Pages
 
 **Done when:** Carl adds a new phrase on his phone, it shows up in practice, and he can export and re-import his data without losing anything.
+
+**Status: 🧪 Built, tested locally, published — awaiting Carl's phone test.** Verified
+locally: adding a custom card (shows up in practice immediately), disabling and fully
+deleting a built-in card, editing a built-in card's text surviving a reload (the merge
+against the unchanged seed file), and a full export→wipe→import round-trip restoring
+cards, settings, and stats exactly. Numbers and Money aren't covered — they're
+generated, not static cards, per the roadmap's own scope. What needs Carl's
+real-device check: using the screen itself on his phone (especially the file
+export/import flow through iOS's share sheet, which the local sandbox can't fully
+exercise).
 
 ---
 
