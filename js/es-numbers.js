@@ -117,3 +117,83 @@ function generateNumberCardPool(count) {
   for (let i = 0; i < count; i++) pool.push(generateNumberCard());
   return pool;
 }
+
+// ---- Voice-practice matching ----
+// Normalizes and fuzzy-scores a heard transcript against a card's Spanish
+// answer (and its acceptable alternates), for the voice-practice mic button.
+
+const ES_ACCENT_FOLD = { 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n', 'ü': 'u' };
+
+function foldAccents(text) {
+  return text.replace(/[áéíóúñü]/g, function (ch) { return ES_ACCENT_FOLD[ch]; });
+}
+
+// A recognizer can transcribe a spoken number as digits ("20") instead of
+// words ("veinte") — convert any digit runs back to Spanish words so that
+// still compares correctly against card.spanish.
+function digitsToSpanishWords(text) {
+  return text.replace(/\d+/g, function (match) {
+    return numberToWords(parseInt(match, 10), false);
+  });
+}
+
+// For fuzzy comparison only — lowercase, digits spelled out, accents
+// folded, punctuation stripped. Never used for display; the original heard
+// transcript is always shown to Carl as-is.
+function normalizeSpanish(text) {
+  let normalized = digitsToSpanishWords(String(text).toLowerCase());
+  normalized = foldAccents(normalized);
+  normalized = normalized.replace(/[^a-z\s]/g, ' ');
+  return normalized.replace(/\s+/g, ' ').trim();
+}
+
+function levenshteinDistance(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prevRow = Array.from({ length: n + 1 }, function (_, j) { return j; });
+  for (let i = 1; i <= m; i++) {
+    const currRow = [i];
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      currRow[j] = Math.min(
+        prevRow[j] + 1,
+        currRow[j - 1] + 1,
+        prevRow[j - 1] + cost
+      );
+    }
+    prevRow = currRow;
+  }
+  return prevRow[n];
+}
+
+function similarityRatio(a, b) {
+  const maxLen = Math.max(a.length, b.length, 1);
+  return 1 - levenshteinDistance(a, b) / maxLen;
+}
+
+// Scores a heard transcript against a card's Spanish answer plus any
+// acceptable alternates, returning whichever one matched best.
+function scoreAgainstAnswers(transcript, answers) {
+  const normalizedTranscript = normalizeSpanish(transcript);
+  let best = { score: 0, answer: answers[0] || '' };
+  answers.forEach(function (answer) {
+    const score = similarityRatio(normalizedTranscript, normalizeSpanish(answer));
+    if (score > best.score) best = { score: score, answer: answer };
+  });
+  return best;
+}
+
+// Per-word match info for "here's what I heard" feedback, against whichever
+// answer scored best in scoreAgainstAnswers.
+function wordMatchHighlights(transcript, bestAnswer) {
+  const targetWords = normalizeSpanish(bestAnswer).split(' ').filter(Boolean);
+  const rawWords = transcript.trim().split(/\s+/).filter(Boolean);
+  return rawWords.map(function (rawWord) {
+    const normWord = normalizeSpanish(rawWord);
+    const matched = targetWords.some(function (tw) {
+      return normWord === tw || similarityRatio(normWord, tw) >= 0.75;
+    });
+    return { word: rawWord, matched: matched };
+  });
+}
