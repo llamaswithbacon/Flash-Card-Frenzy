@@ -147,16 +147,18 @@ Plan this phase against the Phase 0 browser-test results first.
 
 **Done when:** saying a card correctly gets ✓ and mumbling gets ✗ at Normal strictness — or the agreed fallback works, if live recognition isn't available on Carl's setup.
 
-**Status: 🧪 Built, scoring/matching verified locally, published — awaiting Carl's
-phone test.** The mic only shows pre-flip on English-front cards (mirrors the 🔊
-speak-button pattern). A heard answer auto-grades the card exactly like tapping Got
-it/Missed — no separate "undo" step, same as grading manually. **Simplification from
-the original plan, with Carl's OK:** skipped the Chrome→Safari recognition handoff,
-since Phase 0 already confirmed recognition works natively in both browsers on Carl's
-phone — if recognition isn't available at all, 🎤 just stays hidden, no note. What
-needs Carl's real-device test: the actual mic-permission prompt and live recognition
-accuracy/strictness feel, same as voice input can't be exercised in the local preview
-sandbox.
+**Status: ✅ Phase 6 complete, confirmed by Carl on his iPhone.** Scoring was fixed
+after his first test caught every answer scoring correct regardless of mispronunciation
+— the original check compared the whole heard phrase against the whole answer as one
+string, which diluted a single wrong word across a longer sentence. It now checks
+word-by-word and requires every word to be heard; strictness only controls how
+forgiving each word's pronunciation match is. Carl confirms it works, with Strict still
+somewhat lenient in places — likely a phone/browser speech-recognition limitation
+(the recognizer can auto-correct a mispronounced word to the right spelling on its
+own, which no scoring logic can see past) rather than a bug, and Carl's fine with that
+for now. **Simplification from the original plan, with Carl's OK:** skipped the
+Chrome→Safari recognition handoff, since Phase 0 already confirmed recognition works
+natively in both browsers on Carl's phone.
 
 ---
 
