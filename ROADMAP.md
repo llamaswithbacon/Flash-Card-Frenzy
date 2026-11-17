@@ -166,9 +166,8 @@ ahead of any real need, at Carl's request, so a future multi-language version of
 app can reuse the same "recognize whichever side is hidden" architecture. Matching was
 generalized to accept a per-language normalizer; English scoring also tries a card's
 text with any "(...)" or "a / b" shorthand split apart, so a short correct answer like
-"card" still matches `"card (credit/debit)"`. Pushed and published — awaiting Carl's
-phone test of the English-recognition direction specifically (Spanish-guess mode is
-unchanged and still confirmed).
+"card" still matches `"card (credit/debit)"`. **Confirmed working by Carl on his
+iPhone.**
 
 ---
 
@@ -187,15 +186,9 @@ unchanged and still confirmed).
 
 **Done when:** Carl adds a new phrase on his phone, it shows up in practice, and he can export and re-import his data without losing anything.
 
-**Status: 🧪 Built, tested locally, published — awaiting Carl's phone test.** Verified
-locally: adding a custom card (shows up in practice immediately), disabling and fully
-deleting a built-in card, editing a built-in card's text surviving a reload (the merge
-against the unchanged seed file), and a full export→wipe→import round-trip restoring
-cards, settings, and stats exactly. Numbers and Money aren't covered — they're
-generated, not static cards, per the roadmap's own scope. What needs Carl's
-real-device check: using the screen itself on his phone (especially the file
-export/import flow through iOS's share sheet, which the local sandbox can't fully
-exercise).
+**Status: ✅ Phase 7 complete, confirmed by Carl on his iPhone** — including the
+file export/import flow through iOS's share sheet. Numbers and Money aren't covered —
+they're generated, not static cards, per the roadmap's own scope.
 
 ---
 
