@@ -22,6 +22,11 @@ const MANAGEABLE_CATEGORIES = ['words', 'phrases', 'questions'];
 // How long since the last export before the main menu suggests a backup.
 const BACKUP_REMINDER_DAYS = 30;
 
+// A card needs at least this many attempts before it's eligible for
+// "Weakest cards" mode — otherwise a single miss on a brand-new card
+// would dominate the list.
+const WEAKEST_MIN_SEEN = 3;
+
 // Settings used the very first time the app runs, before Carl changes anything.
 const DEFAULT_SETTINGS = {
   direction: 'esToEn', // 'esToEn' | 'enToEs' | 'mixed' — exactly one, ever (audio arrives in Phase 5, for every direction)
@@ -39,7 +44,8 @@ const DEFAULT_SETTINGS = {
   slowSpeed: false,
   voiceName: '', // '' = browser default Spanish voice
   voicePracticeEnabled: true,
-  voiceStrictness: 'normal' // 'easy' | 'normal' | 'strict' — exactly one, ever
+  voiceStrictness: 'normal', // 'easy' | 'normal' | 'strict' — exactly one, ever
+  theme: 'dark' // 'dark' | 'light' — exactly one, ever
 };
 
 // Stops for the Money "maximum amount" slider.
@@ -140,5 +146,14 @@ const STRINGS = {
   formNoLabel: 'No answer',
   formSaveButton: 'Save',
 
-  backupReminderText: "It's been a while — back up your cards?"
+  backupReminderText: "It's been a while — back up your cards?",
+
+  optionsAppearanceHeading: 'Appearance',
+  lightModeLabel: '☀️ Light mode',
+
+  streakLabel: '🔥 {n}-day streak',
+  cardStatsLabel: '{pct}% ({correct}/{seen})',
+
+  weakestButton: '🎯 Weakest cards',
+  notEnoughWeakestData: 'Practice a bit more first — not enough history yet to find your weakest cards.'
 };
