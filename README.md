@@ -77,4 +77,6 @@ back up if it's been 30+ days since your last export.
 
 See [ROADMAP.md](./ROADMAP.md) for the full build plan and progress. Currently:
 **Phases 3 through 6 (Money cards, Timers, Audio + offline, Voice mode) are all
-confirmed on Carl's iPhone. Phase 7 (Manage cards + backup) is next.**
+confirmed on Carl's iPhone. Phase 7 (Manage cards + backup) is built and published,
+awaiting Carl's phone test — along with English-guess voice recognition on
+Spanish-front cards.**
