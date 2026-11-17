@@ -64,6 +64,13 @@ Any time a file in the repository is changed and saved ("committed"), the live s
 6. Your changes save automatically and survive future app updates — they're
    kept separate from the built-in card list, not mixed into it.
 
+### Replacing the app icon
+The app icon is just two image files in the repository — `IMG_1070.png`
+(192x192) and `IMG_1071.png` (512x512). To swap in your own: open each file
+in the repository, tap the pencil (edit) icon, and use GitHub's "Upload
+files" option to replace it with your new image **using the same filename**.
+No other file needs to change.
+
 ### Backing up your cards
 On the Manage Cards screen, **⬇️ Export backup** downloads a JSON file with
 your cards, settings, and practice stats. **⬆️ Import backup** restores
