@@ -6,6 +6,10 @@
 // Key used to save all Options settings in localStorage.
 const SETTINGS_STORAGE_KEY = 'et-settings-v1';
 
+// Key used to save the lifetime practice-time total (separate from Options
+// settings since it's accumulated data, not a user preference).
+const STATS_STORAGE_KEY = 'et-stats-v1';
+
 // Settings used the very first time the app runs, before Carl changes anything.
 const DEFAULT_SETTINGS = {
   direction: 'esToEn', // 'esToEn' | 'enToEs' | 'mixed' — exactly one, ever (audio arrives in Phase 5, for every direction)
@@ -74,5 +78,7 @@ const STRINGS = {
   optionsTimerHeading: 'Timer',
   showTimerLabel: 'Show session timer during practice',
 
-  peekFront: '👁 Hold to see front'
+  peekFront: '👁 Hold to see front',
+
+  totalPracticeLabel: 'Total practice: '
 };
