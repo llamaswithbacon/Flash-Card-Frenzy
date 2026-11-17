@@ -15,13 +15,13 @@ const DEFAULT_SETTINGS = {
     questions: false,
     numbers: false
   },
-  moneySub: {
-    wholeDollars: true,
-    cents: true
-  },
+  moneyKind: 'whole', // 'whole' | 'cents' — exactly one, ever
   moneyMax: 1000,
   sessionLength: 10,
-  showTimer: false
+  showTimer: false,
+  autoPlay: false,
+  slowSpeed: false,
+  voiceName: '' // '' = browser default Spanish voice
 };
 
 // Stops for the Money "maximum amount" slider.
@@ -55,13 +55,19 @@ const STRINGS = {
   directionEnToEs: 'English front → Spanish back',
   directionMixed: 'Mixed (both directions)',
 
+  optionsAudioHeading: 'Audio',
+  speakButton: '🔊',
+  autoPlayLabel: 'Auto-play Spanish audio',
+  slowSpeedLabel: 'Speak slowly',
+  voicePickerLabel: 'Voice',
+  updateAvailable: 'Update available — tap to refresh',
+
   optionsCategoriesHeading: 'Categories',
   lastCategoryMessage: 'At least one category has to stay on.',
 
   optionsMoneyHeading: 'Money practice',
   moneyWholeDollars: 'Whole dollars (e.g. $47)',
   moneyCents: 'Dollars and cents (e.g. $47.83)',
-  lastMoneySubMessage: 'At least one Money option has to stay on.',
   moneyMaxLabel: 'Maximum amount:',
 
   optionsSessionLengthHeading: 'Session length',
