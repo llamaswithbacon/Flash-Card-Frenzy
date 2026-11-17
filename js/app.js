@@ -6,6 +6,8 @@
 const screens = {
   menu: document.getElementById('menu-screen'),
   options: document.getElementById('options-screen'),
+  manageCards: document.getElementById('manage-cards-screen'),
+  cardForm: document.getElementById('card-form-screen'),
   session: document.getElementById('session-screen'),
   summary: document.getElementById('summary-screen')
 };
@@ -13,7 +15,10 @@ const screens = {
 function showScreen(name) {
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
-  if (name === 'menu') renderMenuStats();
+  if (name === 'menu') {
+    renderMenuStats();
+    renderBackupReminder();
+  }
 }
 
 // ---- Settings: load, save, defaults ----
@@ -61,6 +66,29 @@ function saveStats() {
 }
 
 let stats = loadStats();
+
+// ---- Card data: Carl's edits/deletes/custom cards ----
+// Kept separate from seed-cards.json so a future update to the shipped
+// deck merges in rather than silently overwriting Carl's own changes.
+function loadCardData() {
+  let saved = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY)) || {};
+  } catch (e) {
+    saved = {};
+  }
+  return {
+    overrides: saved.overrides && typeof saved.overrides === 'object' ? saved.overrides : {},
+    customCards: Array.isArray(saved.customCards) ? saved.customCards : [],
+    lastExportAt: typeof saved.lastExportAt === 'number' ? saved.lastExportAt : null
+  };
+}
+
+function saveCardData() {
+  localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(cardData));
+}
+
+let cardData = loadCardData();
 
 // ---- Static text ----
 document.getElementById('app-title').textContent = STRINGS.appTitle;
@@ -112,6 +140,29 @@ document.getElementById('voice-easy-label').textContent = STRINGS.voiceStrictnes
 document.getElementById('voice-normal-label').textContent = STRINGS.voiceStrictnessNormal;
 document.getElementById('voice-strict-label').textContent = STRINGS.voiceStrictnessStrict;
 document.getElementById('mic-btn').textContent = STRINGS.micButton;
+
+document.getElementById('manage-cards-btn').textContent = STRINGS.manageCardsButton;
+document.getElementById('manage-cards-back-btn').textContent = STRINGS.manageCardsBack;
+document.getElementById('filter-words').textContent = STRINGS.filterWords;
+document.getElementById('filter-phrases').textContent = STRINGS.filterPhrases;
+document.getElementById('filter-questions').textContent = STRINGS.filterQuestions;
+document.getElementById('add-card-btn').textContent = STRINGS.addCardButton;
+document.getElementById('export-btn').textContent = STRINGS.exportButton;
+document.getElementById('import-btn').textContent = STRINGS.importButton;
+
+document.getElementById('card-form-back-btn').textContent = STRINGS.manageCardsBack;
+document.getElementById('form-category-label').textContent = STRINGS.formCategoryLabel;
+document.getElementById('form-category-words').textContent = CATEGORY_LABELS.words;
+document.getElementById('form-category-phrases').textContent = CATEGORY_LABELS.phrases;
+document.getElementById('form-category-questions').textContent = CATEGORY_LABELS.questions;
+document.getElementById('form-spanish-label').textContent = STRINGS.formSpanishLabel;
+document.getElementById('form-english-label').textContent = STRINGS.formEnglishLabel;
+document.getElementById('form-acceptable-label').textContent = STRINGS.formAcceptableLabel;
+document.getElementById('form-si-label').textContent = STRINGS.formSiLabel;
+document.getElementById('form-no-label').textContent = STRINGS.formNoLabel;
+document.getElementById('form-save-btn').textContent = STRINGS.formSaveButton;
+
+document.getElementById('backup-reminder-text').textContent = STRINGS.backupReminderText;
 
 // ---- Main menu: lifetime practice-time display ----
 const totalPracticeTimeEl = document.getElementById('total-practice-time');
@@ -309,16 +360,255 @@ function speakSpanish(text) {
 
 // ---- Deck loading ----
 let allCards = [];
+let seedCardsRaw = [];
+
+// Merges the shipped seed deck with Carl's own overrides (edits/deletes) and
+// custom cards. Re-run after any Manage Cards change or import so a future
+// seed-cards.json update (new built-in cards) only ever adds, never undoes
+// something Carl changed.
+function rebuildAllCards() {
+  allCards = seedCardsRaw
+    .filter(function (c) { return !(cardData.overrides[c.id] && cardData.overrides[c.id].deleted); })
+    .map(function (c) { return Object.assign({}, c, cardData.overrides[c.id] || {}); })
+    .concat(cardData.customCards);
+}
 
 fetch('./seed-cards.json')
   .then(res => res.json())
   .then(data => {
-    allCards = data.cards;
+    seedCardsRaw = data.cards;
+    rebuildAllCards();
   })
   .catch(err => {
     console.error(err);
     alert(STRINGS.loadError);
   });
+
+// ---- Manage Cards screen ----
+let manageCardsFilter = 'words';
+let editingCardId = null; // null means the form is adding a new card
+
+const cardListEl = document.getElementById('card-list');
+const formCategorySelect = document.getElementById('form-category');
+const formSiNoRow = document.getElementById('form-si-no-row');
+
+function updateFilterButtonStyles() {
+  MANAGEABLE_CATEGORIES.forEach(function (cat) {
+    document.getElementById('filter-' + cat).classList.toggle('active-filter', cat === manageCardsFilter);
+  });
+}
+
+function renderManageCardsList() {
+  cardListEl.innerHTML = '';
+  allCards.filter(function (c) { return c.category === manageCardsFilter; }).forEach(function (card) {
+    const row = document.createElement('div');
+    row.className = 'card-row';
+
+    const enabledCheckbox = document.createElement('input');
+    enabledCheckbox.type = 'checkbox';
+    enabledCheckbox.checked = card.isEnabled;
+    enabledCheckbox.addEventListener('change', function () {
+      setCardFields(card.id, { isEnabled: enabledCheckbox.checked });
+    });
+
+    const textWrap = document.createElement('div');
+    textWrap.className = 'card-row-text';
+    const spanishLine = document.createElement('div');
+    spanishLine.className = 'card-row-spanish';
+    spanishLine.textContent = card.spanish;
+    const englishLine = document.createElement('div');
+    englishLine.className = 'card-row-english';
+    englishLine.textContent = card.english;
+    textWrap.appendChild(spanishLine);
+    textWrap.appendChild(englishLine);
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.textContent = STRINGS.editCardButton;
+    editBtn.addEventListener('click', function () { openCardForm(card); });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = STRINGS.deleteCardButton;
+    deleteBtn.addEventListener('click', function () { deleteCard(card); });
+
+    row.appendChild(enabledCheckbox);
+    row.appendChild(textWrap);
+    row.appendChild(editBtn);
+    row.appendChild(deleteBtn);
+    cardListEl.appendChild(row);
+  });
+}
+
+// Writes fields to a built-in card's override entry, or directly onto a
+// custom card — either way, re-merges and re-renders so the change is
+// reflected immediately.
+function setCardFields(cardId, fields) {
+  const card = allCards.find(function (c) { return c.id === cardId; });
+  if (!card) return;
+  if (card.isBuiltIn) {
+    cardData.overrides[cardId] = Object.assign({}, cardData.overrides[cardId], fields);
+  } else {
+    const idx = cardData.customCards.findIndex(function (c) { return c.id === cardId; });
+    if (idx !== -1) cardData.customCards[idx] = Object.assign({}, cardData.customCards[idx], fields);
+  }
+  saveCardData();
+  rebuildAllCards();
+  renderManageCardsList();
+}
+
+function deleteCard(card) {
+  if (!confirm(STRINGS.deleteCardConfirm.replace('{card}', card.spanish))) return;
+  if (card.isBuiltIn) {
+    cardData.overrides[card.id] = Object.assign({}, cardData.overrides[card.id], { deleted: true });
+  } else {
+    cardData.customCards = cardData.customCards.filter(function (c) { return c.id !== card.id; });
+  }
+  saveCardData();
+  rebuildAllCards();
+  renderManageCardsList();
+}
+
+MANAGEABLE_CATEGORIES.forEach(function (cat) {
+  document.getElementById('filter-' + cat).addEventListener('click', function () {
+    manageCardsFilter = cat;
+    updateFilterButtonStyles();
+    renderManageCardsList();
+  });
+});
+
+document.getElementById('manage-cards-btn').addEventListener('click', function () {
+  updateFilterButtonStyles();
+  renderManageCardsList();
+  showScreen('manageCards');
+});
+document.getElementById('manage-cards-back-btn').addEventListener('click', () => showScreen('options'));
+
+// ---- Add / Edit card form ----
+function updateFormSiNoVisibility() {
+  formSiNoRow.style.display = formCategorySelect.value === 'questions' ? 'flex' : 'none';
+}
+formCategorySelect.addEventListener('change', updateFormSiNoVisibility);
+
+function openCardForm(card) {
+  editingCardId = card ? card.id : null;
+  document.getElementById('card-form-heading').textContent = card ? STRINGS.editCardHeading : STRINGS.addCardHeading;
+  formCategorySelect.value = card ? card.category : manageCardsFilter;
+  document.getElementById('form-spanish').value = card ? card.spanish : '';
+  document.getElementById('form-english').value = card ? card.english : '';
+  document.getElementById('form-acceptable').value = card && card.acceptableAnswers ? card.acceptableAnswers.join('\n') : '';
+  document.getElementById('form-si').value = card && card.siAnswer ? card.siAnswer : '';
+  document.getElementById('form-no').value = card && card.noAnswer ? card.noAnswer : '';
+  updateFormSiNoVisibility();
+  showScreen('cardForm');
+}
+
+document.getElementById('add-card-btn').addEventListener('click', () => openCardForm(null));
+document.getElementById('card-form-back-btn').addEventListener('click', () => showScreen('manageCards'));
+
+document.getElementById('form-save-btn').addEventListener('click', function () {
+  const category = formCategorySelect.value;
+  const spanish = document.getElementById('form-spanish').value.trim();
+  const english = document.getElementById('form-english').value.trim();
+  if (!spanish || !english) {
+    alert(STRINGS.cardFormValidation);
+    return;
+  }
+  const acceptableAnswers = document.getElementById('form-acceptable').value
+    .split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+  const fields = { category: category, spanish: spanish, english: english, acceptableAnswers: acceptableAnswers };
+  if (category === 'questions') {
+    fields.siAnswer = document.getElementById('form-si').value.trim();
+    fields.noAnswer = document.getElementById('form-no').value.trim();
+  }
+
+  if (editingCardId) {
+    setCardFields(editingCardId, fields);
+  } else {
+    cardData.customCards.push(Object.assign({
+      id: 'custom-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      notes: '', pronunciationHint: '', isBuiltIn: false, isEnabled: true, timesSeen: 0, timesCorrect: 0
+    }, fields));
+    saveCardData();
+    rebuildAllCards();
+  }
+
+  manageCardsFilter = category;
+  updateFilterButtonStyles();
+  renderManageCardsList();
+  showScreen('manageCards');
+});
+
+// ---- Export / Import backup ----
+document.getElementById('export-btn').addEventListener('click', function () {
+  cardData.lastExportAt = Date.now();
+  saveCardData();
+
+  const payload = { exportedAt: cardData.lastExportAt, settings: settings, stats: stats, cardData: cardData };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'espanol-en-el-taller-backup.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  renderBackupReminder();
+});
+
+const importFileInput = document.getElementById('import-file-input');
+document.getElementById('import-btn').addEventListener('click', () => importFileInput.click());
+
+importFileInput.addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  e.target.value = ''; // reset so the same file can be reselected later
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function () {
+    let payload;
+    try {
+      payload = JSON.parse(reader.result);
+    } catch (err) {
+      alert(STRINGS.importError);
+      return;
+    }
+    if (!payload || !payload.cardData) {
+      alert(STRINGS.importError);
+      return;
+    }
+    if (!confirm(STRINGS.importConfirm)) return;
+
+    localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(payload.cardData));
+    if (payload.settings) localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload.settings));
+    if (payload.stats) localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(payload.stats));
+    window.location.reload();
+  };
+  reader.readAsText(file);
+});
+
+// ---- Backup reminder (main menu) ----
+let backupReminderDismissed = false;
+const backupReminderLine = document.getElementById('backup-reminder-line');
+
+function shouldShowBackupReminder() {
+  const hasCustomData = cardData.customCards.length > 0 || Object.keys(cardData.overrides).length > 0;
+  if (!hasCustomData) return false;
+  if (!cardData.lastExportAt) return true;
+  const daysSince = (Date.now() - cardData.lastExportAt) / (1000 * 60 * 60 * 24);
+  return daysSince >= BACKUP_REMINDER_DAYS;
+}
+
+function renderBackupReminder() {
+  backupReminderLine.style.display = (!backupReminderDismissed && shouldShowBackupReminder()) ? 'flex' : 'none';
+}
+
+document.getElementById('backup-reminder-dismiss').addEventListener('click', function () {
+  backupReminderDismissed = true;
+  backupReminderLine.style.display = 'none';
+});
 
 // ---- Shuffle helper ----
 function shuffle(arr) {
