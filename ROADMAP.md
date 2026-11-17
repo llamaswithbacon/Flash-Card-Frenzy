@@ -117,16 +117,16 @@ choice not being exclusive, and the dollars-and-cents deck rarely producing a cl
       never wired up; caches the app shell + cards so it works in airplane mode
 - [x] "Update available — tap to refresh" banner when a new version is published, so a
       cache-first service worker never leaves Carl silently stuck on stale content
-- [ ] Publish to GitHub Pages
+- [x] Publish to GitHub Pages
 
 **Done when:** every Spanish card can be read aloud, and the app opens and plays cards with no signal.
 
-**Status: 🧪 Built and tested locally, not yet published.** TTS (🔊 button, auto-play,
-slow-speed, voice picker) verified directly. The service worker registration and
-update-banner code are correct, standard patterns, but the local test sandbox doesn't
-keep a service worker registered long enough to fully exercise the offline path — that
-specifically needs Carl's real-device test (including a real airplane-mode check) once
-published. Awaiting Carl's go-ahead to publish.
+**Status: ✅ Phase 5 complete, confirmed by Carl on his iPhone — including a real
+airplane-mode test.** TTS (🔊 button, auto-play, slow-speed, voice picker), offline
+support via the service worker, and the update-available banner all work as intended.
+One follow-up fix shipped after the initial publish: the 🔊 button is now hidden on
+English-front cards until the card is flipped to reveal the Spanish side, so it can't
+be used to hear the answer before attempting it — confirmed working by Carl.
 
 ---
 
