@@ -85,4 +85,6 @@ back up if it's been 30+ days since your last export.
 See [ROADMAP.md](./ROADMAP.md) for the full build plan and progress. Currently:
 **Phases 3 through 7 (Money cards, Timers, Audio + offline, Voice mode, Manage cards +
 backup) are all confirmed on Carl's iPhone, including English-guess voice recognition
-on Spanish-front cards.**
+on Spanish-front cards. Phase 8 (Polish: light/dark toggle, tap targets, per-card
+accuracy, daily streak, Weakest Cards mode) is built and published, awaiting Carl's
+phone test.**
