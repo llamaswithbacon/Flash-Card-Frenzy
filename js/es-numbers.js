@@ -86,7 +86,11 @@ function generateMoneyCard(kind, maxAmount) {
     cents = 0;
   } else {
     const maxCents = Math.max(1, Math.round(maxAmount * 100));
-    const totalCents = randomInt(1, maxCents);
+    // ~15% of the time, force a clean $X.00 amount rather than leaving it to
+    // the ~1-in-100 chance of totalCents landing on an exact multiple of 100.
+    const totalCents = Math.random() < 0.15
+      ? randomInt(1, Math.max(1, Math.floor(maxAmount))) * 100
+      : randomInt(1, maxCents);
     dollars = Math.floor(totalCents / 100);
     cents = totalCents % 100;
   }
