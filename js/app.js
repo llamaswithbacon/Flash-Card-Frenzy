@@ -33,7 +33,9 @@ function loadSettings() {
     showTimer: typeof saved.showTimer === 'boolean' ? saved.showTimer : DEFAULT_SETTINGS.showTimer,
     autoPlay: typeof saved.autoPlay === 'boolean' ? saved.autoPlay : DEFAULT_SETTINGS.autoPlay,
     slowSpeed: typeof saved.slowSpeed === 'boolean' ? saved.slowSpeed : DEFAULT_SETTINGS.slowSpeed,
-    voiceName: typeof saved.voiceName === 'string' ? saved.voiceName : DEFAULT_SETTINGS.voiceName
+    voiceName: typeof saved.voiceName === 'string' ? saved.voiceName : DEFAULT_SETTINGS.voiceName,
+    voicePracticeEnabled: typeof saved.voicePracticeEnabled === 'boolean' ? saved.voicePracticeEnabled : DEFAULT_SETTINGS.voicePracticeEnabled,
+    voiceStrictness: saved.voiceStrictness || DEFAULT_SETTINGS.voiceStrictness
   };
 }
 
@@ -103,6 +105,14 @@ document.getElementById('show-timer-label').textContent = STRINGS.showTimerLabel
 
 document.getElementById('peek-btn').textContent = STRINGS.peekFront;
 
+document.getElementById('options-voice-heading').textContent = STRINGS.optionsVoiceHeading;
+document.getElementById('voice-practice-enabled-label').textContent = STRINGS.voicePracticeEnabledLabel;
+document.getElementById('voice-strictness-label').textContent = STRINGS.voiceStrictnessLabel;
+document.getElementById('voice-easy-label').textContent = STRINGS.voiceStrictnessEasy;
+document.getElementById('voice-normal-label').textContent = STRINGS.voiceStrictnessNormal;
+document.getElementById('voice-strict-label').textContent = STRINGS.voiceStrictnessStrict;
+document.getElementById('mic-btn').textContent = STRINGS.micButton;
+
 // ---- Main menu: lifetime practice-time display ----
 const totalPracticeTimeEl = document.getElementById('total-practice-time');
 
@@ -135,6 +145,11 @@ const slowSpeedCheckbox = document.getElementById('slow-speed');
 const voicePickerRow = document.getElementById('voice-picker-row');
 const voicePicker = document.getElementById('voice-picker');
 
+const voicePracticeEnabledCheckbox = document.getElementById('voice-practice-enabled');
+const voiceEasy = document.getElementById('voice-easy');
+const voiceNormal = document.getElementById('voice-normal');
+const voiceStrict = document.getElementById('voice-strict');
+
 function renderOptionsScreen() {
   dirEsEn.checked = settings.direction === 'esToEn';
   dirEnEs.checked = settings.direction === 'enToEs';
@@ -162,6 +177,11 @@ function renderOptionsScreen() {
   if (voicePicker.value !== settings.voiceName && [...voicePicker.options].some(o => o.value === settings.voiceName)) {
     voicePicker.value = settings.voiceName;
   }
+
+  voicePracticeEnabledCheckbox.checked = settings.voicePracticeEnabled;
+  voiceEasy.checked = settings.voiceStrictness === 'easy';
+  voiceNormal.checked = settings.voiceStrictness === 'normal';
+  voiceStrict.checked = settings.voiceStrictness === 'strict';
 }
 
 // Generic guard: keeps at least one checkbox in a group checked. Call from a
@@ -235,6 +255,20 @@ slowSpeedCheckbox.addEventListener('change', function () {
 voicePicker.addEventListener('change', function () {
   settings.voiceName = voicePicker.value;
   saveSettings();
+});
+
+voicePracticeEnabledCheckbox.addEventListener('change', function () {
+  settings.voicePracticeEnabled = voicePracticeEnabledCheckbox.checked;
+  saveSettings();
+});
+
+[voiceEasy, voiceNormal, voiceStrict].forEach(function (radio) {
+  radio.addEventListener('change', function () {
+    if (voiceEasy.checked) settings.voiceStrictness = 'easy';
+    else if (voiceStrict.checked) settings.voiceStrictness = 'strict';
+    else settings.voiceStrictness = 'normal';
+    saveSettings();
+  });
 });
 
 // ---- Text-to-speech ----
@@ -415,6 +449,8 @@ const nextRow = document.getElementById('next-row');
 const peekRow = document.getElementById('peek-row');
 const peekBtn = document.getElementById('peek-btn');
 const speakBtn = document.getElementById('speak-btn');
+const micBtn = document.getElementById('mic-btn');
+const voiceFeedbackEl = document.getElementById('voice-feedback');
 const progressText = document.getElementById('progress-text');
 const timerText = document.getElementById('timer-text');
 
@@ -437,16 +473,26 @@ function renderCard() {
   cardFront.innerHTML = '';
   cardBack.innerHTML = '';
 
+  voiceFeedbackEl.style.display = 'none';
+  voiceFeedbackEl.innerHTML = '';
+  micBtn.classList.remove('listening');
+  micBtn.textContent = STRINGS.micButton;
+
   if (direction === 'enToEs') {
     cardFront.textContent = card.english;
     cardBack.textContent = card.spanish;
     // Spanish is on the back here — hide the speaker until the card is flipped,
     // so it can't be used to hear the answer before attempting it.
     speakBtn.style.display = 'none';
+    // Same reasoning as the speaker: only offer voice practice while the
+    // Spanish answer isn't visible yet — this is the moment that actually
+    // tests recall.
+    micBtn.style.display = micAvailableThisSession() ? '' : 'none';
   } else {
     cardFront.textContent = card.spanish;
     cardBack.textContent = card.english;
     speakBtn.style.display = '';
+    micBtn.style.display = 'none';
   }
 
   if (card.category === 'questions') {
@@ -471,6 +517,8 @@ cardInner.addEventListener('click', function () {
     cardInner.classList.add('flipped');
     gradingRow.style.display = 'flex';
     peekRow.style.display = 'flex';
+    micBtn.style.display = 'none';
+    stopRecognition();
 
     // Spanish just became visible on the back; reveal the speaker and, if
     // auto-play is on, speak it now.
@@ -495,6 +543,115 @@ peekBtn.addEventListener('mouseleave', stopPeeking);
 peekBtn.addEventListener('touchstart', function (e) { e.preventDefault(); peekAtFront(); });
 peekBtn.addEventListener('touchend', stopPeeking);
 peekBtn.addEventListener('touchcancel', stopPeeking);
+
+// ---- Voice practice (speech recognition) ----
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+const voiceRecognitionSupported = !!SpeechRecognitionCtor;
+
+let recognizing = false;
+let activeRecognition = null;
+let micDisabledThisSession = false; // set on a permission denial; reset per session
+
+// Whether voice practice can be offered at all right now (per-card direction
+// is checked separately in renderCard).
+function micAvailableThisSession() {
+  return voiceRecognitionSupported && settings.voicePracticeEnabled && !micDisabledThisSession;
+}
+
+function stopRecognition() {
+  if (activeRecognition) {
+    activeRecognition.abort();
+    activeRecognition = null;
+  }
+  recognizing = false;
+  micBtn.classList.remove('listening');
+  micBtn.textContent = STRINGS.micButton;
+}
+
+function showVoiceMessage(text) {
+  voiceFeedbackEl.innerHTML = '';
+  const msg = document.createElement('div');
+  msg.className = 'voice-message';
+  msg.textContent = text;
+  voiceFeedbackEl.appendChild(msg);
+  voiceFeedbackEl.style.display = 'block';
+}
+
+function renderVoiceFeedback(transcript, bestAnswer) {
+  voiceFeedbackEl.innerHTML = '';
+  const heardLine = document.createElement('div');
+  heardLine.className = 'heard-line';
+  heardLine.appendChild(document.createTextNode(STRINGS.heardLabel));
+  wordMatchHighlights(transcript, bestAnswer).forEach(function (w) {
+    const span = document.createElement('span');
+    span.className = 'heard-word' + (w.matched ? '' : ' mismatch');
+    span.textContent = w.word;
+    heardLine.appendChild(span);
+  });
+  voiceFeedbackEl.appendChild(heardLine);
+  voiceFeedbackEl.style.display = 'block';
+}
+
+// A heard transcript auto-grades the card exactly like tapping Got it/Missed
+// would — same as manual grading, there's no "undo" once it's graded.
+function handleVoiceResult(entry, transcript) {
+  const card = entry.card;
+  const answers = [card.spanish].concat(card.acceptableAnswers || []);
+  const best = scoreAgainstAnswers(transcript, answers);
+  const threshold = VOICE_MATCH_THRESHOLDS[settings.voiceStrictness] || VOICE_MATCH_THRESHOLDS.normal;
+  const isCorrect = best.score >= threshold;
+
+  renderVoiceFeedback(transcript, best.answer);
+
+  if (!cardInner.classList.contains('flipped')) {
+    cardInner.classList.add('flipped');
+    gradingRow.style.display = 'flex';
+    peekRow.style.display = 'flex';
+  }
+  micBtn.style.display = 'none';
+
+  grade(isCorrect);
+}
+
+micBtn.addEventListener('click', function () {
+  if (recognizing || !voiceRecognitionSupported) return;
+  const entry = session.queue[session.index];
+  const recognition = new SpeechRecognitionCtor();
+  recognition.lang = 'es-MX';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognizing = true;
+  activeRecognition = recognition;
+  micBtn.classList.add('listening');
+  micBtn.textContent = STRINGS.micListening;
+  voiceFeedbackEl.style.display = 'none';
+  voiceFeedbackEl.innerHTML = '';
+
+  recognition.onresult = function (event) {
+    const transcript = event.results[0][0].transcript;
+    handleVoiceResult(entry, transcript);
+  };
+
+  recognition.onerror = function (event) {
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      micDisabledThisSession = true;
+      micBtn.style.display = 'none';
+      showVoiceMessage(STRINGS.micDenied);
+    } else {
+      showVoiceMessage(STRINGS.micNoSpeech);
+    }
+  };
+
+  recognition.onend = function () {
+    recognizing = false;
+    activeRecognition = null;
+    micBtn.classList.remove('listening');
+    micBtn.textContent = STRINGS.micButton;
+  };
+
+  recognition.start();
+});
 
 function grade(isCorrect) {
   if (isCorrect) session.correct++;
@@ -540,6 +697,7 @@ function stopSessionInterval() {
 
 function finishSession(cardsDone) {
   stopSessionInterval();
+  stopRecognition();
   pauseActiveClock();
   const done = typeof cardsDone === 'number' ? cardsDone : session.queue.length;
   const elapsed = formatElapsed(sessionElapsedMs());
@@ -560,6 +718,7 @@ function startSessionWithBuilder(builderFn) {
   lastBuilder = builderFn;
   session = s;
   sessionActiveMs = 0;
+  micDisabledThisSession = false;
   resumeActiveClock();
   showScreen('session');
   renderCard();
