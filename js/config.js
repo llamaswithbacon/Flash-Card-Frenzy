@@ -25,11 +25,17 @@ const DEFAULT_SETTINGS = {
   showTimer: false,
   autoPlay: false,
   slowSpeed: false,
-  voiceName: '' // '' = browser default Spanish voice
+  voiceName: '', // '' = browser default Spanish voice
+  voicePracticeEnabled: true,
+  voiceStrictness: 'normal' // 'easy' | 'normal' | 'strict' — exactly one, ever
 };
 
 // Stops for the Money "maximum amount" slider.
 const MONEY_MAX_STEPS = [10, 20, 50, 100, 200, 500, 1000];
+
+// How closely a spoken answer has to match before it counts as correct, by
+// strictness level. Tunable here without touching the matching logic.
+const VOICE_MATCH_THRESHOLDS = { easy: 0.6, normal: 0.75, strict: 0.9 };
 
 const CATEGORY_LABELS = {
   words: 'Words',
@@ -80,5 +86,18 @@ const STRINGS = {
 
   peekFront: '👁 Hold to see front',
 
-  totalPracticeLabel: 'Total practice: '
+  totalPracticeLabel: 'Total practice: ',
+
+  optionsVoiceHeading: 'Voice practice',
+  voicePracticeEnabledLabel: 'Enable voice practice (🎤)',
+  voiceStrictnessLabel: 'How strict should grading be?',
+  voiceStrictnessEasy: 'Easy',
+  voiceStrictnessNormal: 'Normal',
+  voiceStrictnessStrict: 'Strict',
+
+  micButton: '🎤',
+  micListening: '🎤 Listening…',
+  micDenied: 'Microphone access was denied. You can enable it in Settings, or just use Got it / Missed.',
+  micNoSpeech: "Didn't catch that — try again or grade yourself.",
+  heardLabel: 'Heard: '
 };
