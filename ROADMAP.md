@@ -160,6 +160,16 @@ for now. **Simplification from the original plan, with Carl's OK:** skipped the
 Chrome→Safari recognition handoff, since Phase 0 already confirmed recognition works
 natively in both browsers on Carl's phone.
 
+**Follow-up (2026-11-18):** voice practice now also recognizes the **English** guess
+on Spanish-front cards, not just the Spanish guess on English-front cards — built
+ahead of any real need, at Carl's request, so a future multi-language version of this
+app can reuse the same "recognize whichever side is hidden" architecture. Matching was
+generalized to accept a per-language normalizer; English scoring also tries a card's
+text with any "(...)" or "a / b" shorthand split apart, so a short correct answer like
+"card" still matches `"card (credit/debit)"`. Pushed and published — awaiting Carl's
+phone test of the English-recognition direction specifically (Spanish-guess mode is
+unchanged and still confirmed).
+
 ---
 
 ## Phase 7: Manage cards + backup
