@@ -484,16 +484,16 @@ function renderCard() {
     // Spanish is on the back here — hide the speaker until the card is flipped,
     // so it can't be used to hear the answer before attempting it.
     speakBtn.style.display = 'none';
-    // Same reasoning as the speaker: only offer voice practice while the
-    // Spanish answer isn't visible yet — this is the moment that actually
-    // tests recall.
-    micBtn.style.display = micAvailableThisSession() ? '' : 'none';
   } else {
     cardFront.textContent = card.spanish;
     cardBack.textContent = card.english;
     speakBtn.style.display = '';
-    micBtn.style.display = 'none';
   }
+
+  // Voice practice works in either direction now — whichever side is
+  // hidden is the thing being practiced, same reasoning as the speaker
+  // button: only offer it pre-flip, before the answer is visible.
+  micBtn.style.display = micAvailableThisSession() ? '' : 'none';
 
   if (card.category === 'questions') {
     addSubLine(cardBack, 'Sí: ' + card.siAnswer);
@@ -561,6 +561,28 @@ function micAvailableThisSession() {
   return voiceRecognitionSupported && settings.voicePracticeEnabled && !micDisabledThisSession;
 }
 
+// What to recognize and score against for a given card — whichever side is
+// hidden is the thing being practiced. Spanish keeps its own accent-folding/
+// digit-to-words normalization and acceptable-alternates list; English (or
+// any future non-Spanish language) uses a simpler generic normalizer, plus
+// runtime variants for the few cards whose English text uses "a / b" or
+// "word (clarifier)" shorthand.
+function resolveVoiceTarget(entry) {
+  const card = entry.card;
+  if (entry.direction === 'enToEs') {
+    return {
+      lang: 'es-MX',
+      normalizeFn: normalizeSpanish,
+      answers: [card.spanish].concat(card.acceptableAnswers || [])
+    };
+  }
+  return {
+    lang: 'en-US',
+    normalizeFn: normalizeGeneric,
+    answers: englishAnswerVariants(card.english)
+  };
+}
+
 function stopRecognition() {
   if (activeRecognition) {
     activeRecognition.abort();
@@ -580,12 +602,12 @@ function showVoiceMessage(text) {
   voiceFeedbackEl.style.display = 'block';
 }
 
-function renderVoiceFeedback(transcript, bestAnswer, wordThreshold) {
+function renderVoiceFeedback(transcript, bestAnswer, wordThreshold, normalizeFn) {
   voiceFeedbackEl.innerHTML = '';
   const heardLine = document.createElement('div');
   heardLine.className = 'heard-line';
   heardLine.appendChild(document.createTextNode(STRINGS.heardLabel));
-  wordMatchHighlights(transcript, bestAnswer, wordThreshold).forEach(function (w) {
+  wordMatchHighlights(transcript, bestAnswer, wordThreshold, normalizeFn).forEach(function (w) {
     const span = document.createElement('span');
     span.className = 'heard-word' + (w.matched ? '' : ' mismatch');
     span.textContent = w.word;
@@ -597,19 +619,17 @@ function renderVoiceFeedback(transcript, bestAnswer, wordThreshold) {
 
 // A heard transcript auto-grades the card exactly like tapping Got it/Missed
 // would — same as manual grading, there's no "undo" once it's graded.
-function handleVoiceResult(entry, transcript) {
-  const card = entry.card;
-  const answers = [card.spanish].concat(card.acceptableAnswers || []);
+function handleVoiceResult(entry, transcript, voiceTarget) {
   // Strictness controls how closely each individual word has to sound to
   // count as a match — it does NOT let you skip or swap out a word. Every
   // word in whichever acceptable answer matched best has to be heard; a
   // shorter valid phrasing (e.g. "carro" instead of "el carro") is handled
   // by it being its own entry in acceptableAnswers, not by partial credit.
   const wordThreshold = VOICE_MATCH_THRESHOLDS[settings.voiceStrictness] || VOICE_MATCH_THRESHOLDS.normal;
-  const best = scoreAgainstAnswers(transcript, answers, wordThreshold);
+  const best = scoreAgainstAnswers(transcript, voiceTarget.answers, wordThreshold, voiceTarget.normalizeFn);
   const isCorrect = best.score >= 1;
 
-  renderVoiceFeedback(transcript, best.answer, wordThreshold);
+  renderVoiceFeedback(transcript, best.answer, wordThreshold, voiceTarget.normalizeFn);
 
   if (!cardInner.classList.contains('flipped')) {
     cardInner.classList.add('flipped');
@@ -625,8 +645,9 @@ function handleVoiceResult(entry, transcript) {
 micBtn.addEventListener('click', function () {
   if (recognizing || !voiceRecognitionSupported) return;
   const entry = session.queue[session.index];
+  const voiceTarget = resolveVoiceTarget(entry);
   const recognition = new SpeechRecognitionCtor();
-  recognition.lang = 'es-MX';
+  recognition.lang = voiceTarget.lang;
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
@@ -639,7 +660,7 @@ micBtn.addEventListener('click', function () {
 
   recognition.onresult = function (event) {
     const transcript = event.results[0][0].transcript;
-    handleVoiceResult(entry, transcript);
+    handleVoiceResult(entry, transcript, voiceTarget);
   };
 
   recognition.onerror = function (event) {
