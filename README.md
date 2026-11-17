@@ -57,4 +57,6 @@ Any time a file in the repository is changed and saved ("committed"), the live s
 
 ## Project status
 
-See [ROADMAP.md](./ROADMAP.md) for the full build plan and progress. Currently: **Phase 3 (Money cards) built and published, awaiting Carl's iPhone test.**
+See [ROADMAP.md](./ROADMAP.md) for the full build plan and progress. Currently:
+**Phase 3 (Money cards) confirmed on Carl's iPhone; Phase 5 (Audio + offline) built and
+tested locally, awaiting Carl's go-ahead to publish.**
