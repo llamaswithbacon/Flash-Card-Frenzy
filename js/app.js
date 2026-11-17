@@ -26,10 +26,13 @@ function loadSettings() {
   return {
     direction: saved.direction || DEFAULT_SETTINGS.direction,
     categories: Object.assign({}, DEFAULT_SETTINGS.categories, saved.categories),
-    moneySub: Object.assign({}, DEFAULT_SETTINGS.moneySub, saved.moneySub),
+    moneyKind: saved.moneyKind || DEFAULT_SETTINGS.moneyKind,
     moneyMax: saved.moneyMax || DEFAULT_SETTINGS.moneyMax,
     sessionLength: saved.sessionLength || DEFAULT_SETTINGS.sessionLength,
-    showTimer: typeof saved.showTimer === 'boolean' ? saved.showTimer : DEFAULT_SETTINGS.showTimer
+    showTimer: typeof saved.showTimer === 'boolean' ? saved.showTimer : DEFAULT_SETTINGS.showTimer,
+    autoPlay: typeof saved.autoPlay === 'boolean' ? saved.autoPlay : DEFAULT_SETTINGS.autoPlay,
+    slowSpeed: typeof saved.slowSpeed === 'boolean' ? saved.slowSpeed : DEFAULT_SETTINGS.slowSpeed,
+    voiceName: typeof saved.voiceName === 'string' ? saved.voiceName : DEFAULT_SETTINGS.voiceName
   };
 }
 
@@ -57,6 +60,13 @@ document.getElementById('options-directions-heading').textContent = STRINGS.opti
 document.getElementById('dir-es-en-label').textContent = STRINGS.directionEsToEn;
 document.getElementById('dir-en-es-label').textContent = STRINGS.directionEnToEs;
 document.getElementById('dir-mixed-label').textContent = STRINGS.directionMixed;
+
+document.getElementById('options-audio-heading').textContent = STRINGS.optionsAudioHeading;
+document.getElementById('auto-play-label').textContent = STRINGS.autoPlayLabel;
+document.getElementById('slow-speed-label').textContent = STRINGS.slowSpeedLabel;
+document.getElementById('voice-picker-label').textContent = STRINGS.voicePickerLabel;
+document.getElementById('speak-btn').textContent = STRINGS.speakButton;
+document.getElementById('update-reload-btn').textContent = STRINGS.updateAvailable;
 
 document.getElementById('options-categories-heading').textContent = STRINGS.optionsCategoriesHeading;
 document.getElementById('cat-words-label').textContent = CATEGORY_LABELS.words;
@@ -93,6 +103,11 @@ const sessionLengthSlider = document.getElementById('session-length-slider');
 const sessionLengthValue = document.getElementById('session-length-value');
 const showTimerCheckbox = document.getElementById('show-timer');
 
+const autoPlayCheckbox = document.getElementById('auto-play');
+const slowSpeedCheckbox = document.getElementById('slow-speed');
+const voicePickerRow = document.getElementById('voice-picker-row');
+const voicePicker = document.getElementById('voice-picker');
+
 function renderOptionsScreen() {
   dirEsEn.checked = settings.direction === 'esToEn';
   dirEnEs.checked = settings.direction === 'enToEs';
@@ -103,8 +118,8 @@ function renderOptionsScreen() {
   catQuestions.checked = settings.categories.questions;
   catNumbers.checked = settings.categories.numbers;
 
-  moneyWhole.checked = settings.moneySub.wholeDollars;
-  moneyCents.checked = settings.moneySub.cents;
+  moneyWhole.checked = settings.moneyKind === 'whole';
+  moneyCents.checked = settings.moneyKind === 'cents';
 
   const maxIdx = MONEY_MAX_STEPS.indexOf(settings.moneyMax);
   moneyMaxSlider.value = maxIdx === -1 ? MONEY_MAX_STEPS.length - 1 : maxIdx;
@@ -114,6 +129,12 @@ function renderOptionsScreen() {
   sessionLengthValue.textContent = settings.sessionLength + ' cards';
 
   showTimerCheckbox.checked = settings.showTimer;
+
+  autoPlayCheckbox.checked = settings.autoPlay;
+  slowSpeedCheckbox.checked = settings.slowSpeed;
+  if (voicePicker.value !== settings.voiceName && [...voicePicker.options].some(o => o.value === settings.voiceName)) {
+    voicePicker.value = settings.voiceName;
+  }
 }
 
 // Generic guard: keeps at least one checkbox in a group checked. Call from a
@@ -150,12 +171,9 @@ function guardAtLeastOne(checkboxes, changedBox, message) {
   });
 });
 
-[moneyWhole, moneyCents].forEach(function (box) {
-  box.addEventListener('change', function () {
-    const group = [moneyWhole, moneyCents];
-    if (!guardAtLeastOne(group, box, STRINGS.lastMoneySubMessage)) return;
-    settings.moneySub.wholeDollars = moneyWhole.checked;
-    settings.moneySub.cents = moneyCents.checked;
+[moneyWhole, moneyCents].forEach(function (radio) {
+  radio.addEventListener('change', function () {
+    settings.moneyKind = moneyWhole.checked ? 'whole' : 'cents';
     saveSettings();
   });
 });
@@ -176,6 +194,57 @@ showTimerCheckbox.addEventListener('change', function () {
   settings.showTimer = showTimerCheckbox.checked;
   saveSettings();
 });
+
+autoPlayCheckbox.addEventListener('change', function () {
+  settings.autoPlay = autoPlayCheckbox.checked;
+  saveSettings();
+});
+
+slowSpeedCheckbox.addEventListener('change', function () {
+  settings.slowSpeed = slowSpeedCheckbox.checked;
+  saveSettings();
+});
+
+voicePicker.addEventListener('change', function () {
+  settings.voiceName = voicePicker.value;
+  saveSettings();
+});
+
+// ---- Text-to-speech ----
+let spanishVoices = [];
+
+function loadVoices() {
+  const voices = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+  spanishVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('es'));
+
+  voicePicker.innerHTML = '';
+  spanishVoices.forEach(function (voice) {
+    const option = document.createElement('option');
+    option.value = voice.name;
+    option.textContent = voice.name + ' (' + voice.lang + ')';
+    voicePicker.appendChild(option);
+  });
+  voicePickerRow.style.display = spanishVoices.length > 1 ? 'flex' : 'none';
+  if (spanishVoices.some(v => v.name === settings.voiceName)) {
+    voicePicker.value = settings.voiceName;
+  }
+}
+
+if ('speechSynthesis' in window) {
+  loadVoices();
+  speechSynthesis.addEventListener('voiceschanged', loadVoices);
+}
+
+function speakSpanish(text) {
+  if (!('speechSynthesis' in window) || !text) return;
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'es-MX';
+  utterance.rate = settings.slowSpeed ? 0.7 : 1.0;
+  const chosenVoice = spanishVoices.find(v => v.name === settings.voiceName);
+  if (chosenVoice) utterance.voice = chosenVoice;
+  speechSynthesis.speak(utterance);
+}
 
 // ---- Deck loading ----
 let allCards = [];
@@ -206,10 +275,6 @@ let lastBuilder = buildSession; // which builder "Play again" should reuse; decl
 
 function enabledCategories() {
   return Object.keys(settings.categories).filter(cat => settings.categories[cat]);
-}
-
-function enabledMoneyKinds() {
-  return Object.keys(settings.moneySub).filter(kind => settings.moneySub[kind]);
 }
 
 // Resolves to an actual per-card direction; 'mixed' picks one at random for each card.
@@ -260,11 +325,9 @@ function buildSession() {
 
 // Money session: cards are generated fresh each time, never stored.
 function buildMoneySession() {
-  const kinds = enabledMoneyKinds();
   const queue = [];
   for (let i = 0; i < settings.sessionLength; i++) {
-    const kind = kinds[Math.floor(Math.random() * kinds.length)] === 'wholeDollars' ? 'whole' : 'cents';
-    queue.push({ card: generateMoneyCard(kind, settings.moneyMax), direction: pickDirection() });
+    queue.push({ card: generateMoneyCard(settings.moneyKind, settings.moneyMax), direction: pickDirection() });
   }
 
   return {
@@ -283,6 +346,7 @@ const gradingRow = document.getElementById('grading-row');
 const nextRow = document.getElementById('next-row');
 const peekRow = document.getElementById('peek-row');
 const peekBtn = document.getElementById('peek-btn');
+const speakBtn = document.getElementById('speak-btn');
 const progressText = document.getElementById('progress-text');
 const timerText = document.getElementById('timer-text');
 
@@ -307,10 +371,10 @@ function renderCard() {
 
   if (direction === 'enToEs') {
     cardFront.textContent = card.english;
-    addSubLine(cardBack, card.spanish);
+    cardBack.textContent = card.spanish;
   } else {
     cardFront.textContent = card.spanish;
-    addSubLine(cardBack, card.english);
+    cardBack.textContent = card.english;
   }
 
   if (card.category === 'questions') {
@@ -319,13 +383,28 @@ function renderCard() {
   }
 
   progressText.textContent = (session.index + 1) + ' / ' + session.queue.length;
+
+  // Spanish is already showing on the front in this direction; speak it now.
+  if (settings.autoPlay && direction !== 'enToEs') {
+    speakSpanish(card.spanish);
+  }
 }
+
+speakBtn.addEventListener('click', function () {
+  speakSpanish(session.queue[session.index].card.spanish);
+});
 
 cardInner.addEventListener('click', function () {
   if (!cardInner.classList.contains('flipped')) {
     cardInner.classList.add('flipped');
     gradingRow.style.display = 'flex';
     peekRow.style.display = 'flex';
+
+    // Spanish just became visible on the back; speak it now.
+    const entry = session.queue[session.index];
+    if (settings.autoPlay && entry.direction === 'enToEs') {
+      speakSpanish(entry.card.spanish);
+    }
   }
 });
 
@@ -423,3 +502,38 @@ document.getElementById('end-session-btn').addEventListener('click', function ()
   finishSession(session.index + (currentCardGraded ? 1 : 0));
 });
 document.getElementById('summary-menu-btn').addEventListener('click', () => showScreen('menu'));
+
+// ---- Offline support + update notification ----
+const updateBanner = document.getElementById('update-banner');
+const updateReloadBtn = document.getElementById('update-reload-btn');
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(function (registration) {
+    registration.addEventListener('updatefound', function () {
+      const newWorker = registration.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', function () {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          updateBanner.style.display = 'block';
+        }
+      });
+    });
+  }).catch(function (err) {
+    console.error('Service worker registration failed:', err);
+  });
+
+  let reloadedForUpdate = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (reloadedForUpdate) return;
+    reloadedForUpdate = true;
+    window.location.reload();
+  });
+
+  updateReloadBtn.addEventListener('click', function () {
+    navigator.serviceWorker.getRegistration().then(function (registration) {
+      if (registration && registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+    });
+  });
+}
